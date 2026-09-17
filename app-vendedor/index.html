@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>App Vendedor - Rota Diária</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 pb-24 select-none">
+
+  <!-- CABEÇALHO FIXO -->
+  <header class="bg-blue-700 text-white p-4 sticky top-0 z-30 shadow-md">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="font-bold text-lg leading-tight" id="header-vendedor">Selecione o Vendedor</h1>
+        <p class="text-xs text-blue-200" id="header-rota">Aguardando definição de rota...</p>
+      </div>
+      <button onclick="resetarDadosSimulacao()" class="bg-blue-900 text-[10px] px-2 py-1 rounded border border-blue-400">Resetar</button>
+    </div>
+  </header>
+
+  <!-- PASSO 1: CONFIGURAÇÃO DE ROTA -->
+  <section id="step-config" class="p-4 max-w-md mx-auto space-y-4">
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
+      <h2 class="font-bold text-gray-700 text-base border-b pb-2">🚚 Configurar Rota de Hoje</h2>
+      
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Vendedor</label>
+        <select id="select-vendedor" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+          <option value="">-- Selecione o Vendedor --</option>
+          <option value="Carlos Silva">Carlos Silva (Titular)</option>
+          <option value="João Santos">João Santos (Titular)</option>
+          <option value="Claudemiro (Cobertura)">Claudemiro (Cobertura)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Dia da Semana / Rota</label>
+        <select id="select-rota" onchange="toggleRotaMistaUI()" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+          <option value="Terça-feira - Rota Jandaia / Mandaguari / Marumbi">Terça-feira: Jandaia, Mandaguari & Marumbi</option>
+          <option value="Quarta-feira - Rota Apucarana / Cambira">Quarta-feira: Apucarana & Cambira</option>
+          <option value="MISTA">Mista / Personalizada (Escolher Cidades)</option>
+        </select>
+      </div>
+
+      <!-- PAINEL CIDADES MISTAS -->
+      <div id="box-cidades-mistas" class="hidden p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
+        <label class="block text-xs font-bold text-blue-900">Selecione as Cidades da Rota Mista:</label>
+        <div id="checklist-cidades" class="grid grid-cols-2 gap-2 text-xs"></div>
+      </div>
+
+      <button onclick="iniciarRota()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg">
+        INICIAR ATENDIMENTOS →
+      </button>
+    </div>
+  </section>
+
+  <!-- PASSO 2: CIDADES E CLIENTES -->
+  <main id="step-rota" class="p-4 max-w-md mx-auto space-y-3 hidden">
+    <div class="flex justify-between items-center mb-1">
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
+      <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota / Vendedor</button>
+    </div>
+
+    <div id="cidades-container" class="space-y-3"></div>
+  </main>
+
+  <!-- BOTÃO FIXO DE FECHAMENTO DE DIA -->
+  <div id="box-fechamento" class="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-300 shadow-lg max-w-md mx-auto hidden z-20">
+    <button onclick="concluirFechamentoDia()" class="w-full bg-blue-900 active:bg-blue-950 text-white font-black p-3.5 rounded-xl text-sm shadow-md">
+      🔒 CONCLUIR FECHAMENTO DO DIA
+    </button>
+  </div>
+
+  <!-- MODAL DE VENDA -->
+  <div id="modal-venda" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center hidden">
+    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+      
+      <div class="flex justify-between items-start border-b pb-3">
+        <div>
+          <h3 class="font-bold text-lg text-gray-900" id="modal-cliente-nome">Nome do Cliente</h3>
+          <p class="text-xs text-gray-500" id="modal-cliente-endereco">Endereço do cliente</p>
+        </div>
+        <button onclick="fecharModal()" class="text-gray-400 font-bold text-xl px-2">✕</button>
+      </div>
+
+      <!-- ITENS E PREÇOS -->
+      <div class="space-y-3" id="produtos-list"></div>
+
+      <!-- CONDICIONAIS DE PAGAMENTO E DOCUMENTOS -->
+      <div class="pt-3 border-t space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Forma de Pagamento</label>
+          <select id="modal-pagamento" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold">
+            <option value="Dinheiro">Dinheiro (À Vista)</option>
+            <option value="PIX">PIX</option>
+            <option value="Nota a Prazo">Nota Assinada (A Prazo)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Observações / Detalhes</label>
+          <textarea id="modal-obs" rows="2" placeholder="Ex: Deixou pago nota antiga de R$ 50; trocas com avaria..." class="w-full p-2.5 text-xs bg-gray-50 border border-gray-300 rounded-lg"></textarea>
+        </div>
+
+        <!-- SELEÇÃO DE NOTA E BOLETO PARA O ESCRITÓRIO -->
+        <div class="flex space-x-6 pt-1 bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+          <label class="flex items-center space-x-2 text-xs font-bold text-gray-700 cursor-pointer">
+            <input type="checkbox" id="chk-nota" class="w-4 h-4 rounded text-blue-600">
+            <span>Emitir Nota</span>
+          </label>
+          <label class="flex items-center space-x-2 text-xs font-bold text-gray-700 cursor-pointer">
+            <input type="checkbox" id="chk-boleto" class="w-4 h-4 rounded text-blue-600">
+            <span>Gerar Boleto</span>
+          </label>
+        </div>
+
+        <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <span class="font-bold text-blue-900 text-sm">TOTAL LÍQUIDO:</span>
+          <span class="font-black text-blue-700 text-xl" id="modal-total-val">R$ 0,00</span>
+        </div>
+      </div>
+
+      <!-- BOTOES DE AÇÃO -->
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="salvarVenda(false)" class="bg-red-100 active:bg-red-200 text-red-700 font-bold p-3.5 rounded-xl text-sm">
+          Não Comprou
+        </button>
+        <button onclick="salvarVenda(true)" class="bg-green-600 active:bg-green-700 text-white font-bold p-3.5 rounded-xl text-sm shadow-md">
+          Salvar Venda
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const PRODUTOS_CATALOGO = [
+      { id: '330ML', nome: 'Suco 330ml', precoPadrao: 3.50 },
+      { id: '900ML', nome: 'Suco 900ml', precoPadrao: 7.00 },
+      { id: 'UVA', nome: 'Suco de Uva 900ml', precoPadrao: 8.00 },
+      { id: 'AGUA_SG', nome: 'Água Sem Gás 500ml', precoPadrao: 1.50 },
+      { id: 'AGUA_CG', nome: 'Água Com Gás 500ml', precoPadrao: 2.00 },
+      { id: 'GELO', nome: 'Saco de Gelo 5kg', precoPadrao: 10.00 }
+    ];
+
+    const BASE_DADOS_INICIAL = [
+      {
+        cidade: 'Jandaia do Sul',
+        clientes: [
+          { id: 101, nome: 'Mercado Bom Preço', endereco: 'Av. Tancredo Neves, 450', status: 'pendente', venda: null },
+          { id: 102, nome: 'Panificadora Central', endereco: 'Rua Placido Caldas, 112', status: 'pendente', venda: null }
+        ]
+      },
+      {
+        cidade: 'Mandaguari',
+        clientes: [
+          { id: 201, nome: 'Supermercado Paraná', endereco: 'Rua Amazonas, 890', status: 'pendente', venda: null }
+        ]
+      },
+      {
+        cidade: 'Marumbi',
+        clientes: [
+          { id: 501, nome: 'Mercearia Marumbi', endereco: 'Praça Matriz, 10', status: 'pendente', venda: null }
+        ]
+      },
+      {
+        cidade: 'Apucarana',
+        clientes: [
+          { id: 401, nome: 'Mercado Cidade Alta', endereco: 'Rua Rio de Janeiro, 550', status: 'pendente', venda: null }
+        ]
+      },
+      {
+        cidade: 'Cambira',
+        clientes: [
+          { id: 301, nome: 'Mercado Cambira', endereco: 'Av. Brasil, 300', status: 'pendente', venda: null }
+        ]
+      }
+    ];
+
+    let bancoDadosRota = [];
+    let clienteAtual = null;
+    let itensVendaTemp = {};
+    let sanfonasAbertas = {};
+    let rotaEncerrada = false;
+
+    const fmtMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    window.onload = function() {
+      montarChecklistCidadesMistas();
+      carregarEstadoSalvo();
+    };
+
+    function montarChecklistCidadesMistas() {
+      const box = document.getElementById('checklist-cidades');
+      box.innerHTML = '';
+      BASE_DADOS_INICIAL.forEach(c => {
+        box.innerHTML += `
+          <label class="flex items-center space-x-1.5 cursor-pointer">
+            <input type="checkbox" value="${c.cidade}" class="chk-cidade-mista rounded text-blue-600" checked>
+            <span>${c.cidade}</span>
+          </label>`;
+      });
+    }
+
+    function toggleRotaMistaUI() {
+      const tipo = document.getElementById('select-rota').value;
+      const box = document.getElementById('box-cidades-mistas');
+      box.classList.toggle('hidden', tipo !== 'MISTA');
+    }
+
+    function carregarEstadoSalvo() {
+      try {
+        const estado = localStorage.getItem('pwa_vendedor_state');
+        if (estado) {
+          const dados = JSON.parse(estado);
+          bancoDadosRota = dados.bancoDadosRota || [];
+          rotaEncerrada = dados.statusRota === 'CONCLUIDA';
+
+          document.getElementById('select-vendedor').value = dados.vendedorRaw || '';
+          document.getElementById('select-rota').value = dados.rotaRaw || '';
+          document.getElementById('header-vendedor').innerText = dados.vendedor || 'Vendedor';
+          document.getElementById('header-rota').innerText = dados.rota || '';
+
+          toggleRotaMistaUI();
+
+          document.getElementById('step-config').classList.add('hidden');
+          document.getElementById('step-rota').classList.remove('hidden');
+          document.getElementById('box-fechamento').classList.remove('hidden');
+
+          renderizarCidades();
+          if (rotaEncerrada) travarAplicativo();
+        } else {
+          bancoDadosRota = JSON.parse(JSON.stringify(BASE_DADOS_INICIAL));
+        }
+      } catch (e) {
+        localStorage.removeItem('pwa_vendedor_state');
+        bancoDadosRota = JSON.parse(JSON.stringify(BASE_DADOS_INICIAL));
+      }
+    }
+
+    function salvarEstadoMemoria() {
+      const estado = {
+        vendedorRaw: document.getElementById('select-vendedor').value,
+        rotaRaw: document.getElementById('select-rota').value,
+        vendedor: document.getElementById('header-vendedor').innerText,
+        rota: document.getElementById('header-rota').innerText,
+        bancoDadosRota: bancoDadosRota,
+        statusRota: rotaEncerrada ? 'CONCLUIDA' : 'EM_ANDAMENTO'
+      };
+      localStorage.setItem('pwa_vendedor_state', JSON.stringify(estado));
+    }
+
+    function resetarDadosSimulacao() {
+      if(confirm("Deseja resetar toda a simulação do dia?")) {
+        localStorage.removeItem('pwa_vendedor_state');
+        location.reload();
+      }
+    }
+
+    function iniciarRota() {
+      const temVendas = bancoDadosRota.some(b => b.clientes.some(c => c.status !== 'pendente'));
+      if (temVendas && !confirm("Atenção: Já existem vendas registradas hoje. Reiniciar a rota apagará esses lançamentos. Deseja continuar?")) {
+        return;
+      }
+
+      const vend = document.getElementById('select-vendedor').value;
+      const tipoRota = document.getElementById('select-rota').value;
+      if(!vend) { alert('Selecione o vendedor!'); return; }
+
+      let cidadesFiltradas = [];
+      let labelRota = tipoRota;
+
+      if (tipoRota === 'MISTA') {
+        const sel = Array.from(document.querySelectorAll('.chk-cidade-mista:checked')).map(cb => cb.value);
+        if (sel.length === 0) { alert('Selecione ao menos 1 cidade!'); return; }
+        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => sel.includes(c.cidade));
+        labelRota = `Mista: ${sel.join(', ')}`;
+      } else if (tipoRota.includes('Jandaia')) {
+        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => ['Jandaia do Sul', 'Mandaguari', 'Marumbi'].includes(c.cidade));
+      } else {
+        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => ['Apucarana', 'Cambira'].includes(c.cidade));
+      }
+
+      bancoDadosRota = JSON.parse(JSON.stringify(cidadesFiltradas));
+      rotaEncerrada = false;
+
+      document.getElementById('header-vendedor').innerText = vend;
+      document.getElementById('header-rota').innerText = labelRota;
+
+      document.getElementById('step-config').classList.add('hidden');
+      document.getElementById('step-rota').classList.remove('hidden');
+      document.getElementById('box-fechamento').classList.remove('hidden');
+
+      salvarEstadoMemoria();
+      renderizarCidades();
+    }
+
+    function voltarConfig() {
+      document.getElementById('step-config').classList.remove('hidden');
+      document.getElementById('step-rota').classList.add('hidden');
+      document.getElementById('box-fechamento').classList.add('hidden');
+    }
+
+    function renderizarCidades() {
+      const container = document.getElementById('cidades-container');
+      container.innerHTML = '';
+
+      bancoDadosRota.forEach((bloco, idx) => {
+        const total = bloco.clientes.length;
+        const concluidos = bloco.clientes.filter(c => c.status !== 'pendente').length;
+        const concluida = concluidos === total && total > 0;
+
+        const card = document.createElement('div');
+        card.className = `rounded-xl border transition shadow-sm overflow-hidden ${concluida ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'}`;
+
+        let htmlClientes = '';
+        bloco.clientes.forEach((cli) => {
+          let badge = '<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-semibold">Pendente</span>';
+          
+          if(cli.status === 'vendido') {
+            let trocasTotal = Object.values(cli.venda.itens).reduce((acc, i) => acc + i.troca, 0);
+            let infoTroca = trocasTotal > 0 ? ` · ${trocasTotal} troca(s)` : '';
+            badge = `<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">✓ ${fmtMoeda(cli.venda.total)}${infoTroca}</span>`;
+          }
+          if(cli.status === 'nao_comprou') badge = '<span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-medium">Não Comprou</span>';
+
+          htmlClientes += `
+            <div onclick="abrirModalVenda(${cli.id})" class="p-3 bg-white border-b last:border-b-0 active:bg-gray-50 flex justify-between items-center cursor-pointer">
+              <div>
+                <p class="font-bold text-sm text-gray-800">${cli.nome}</p>
+                <p class="text-xs text-gray-400">${cli.endereco}</p>
+              </div>
+              <div>${badge}</div>
+            </div>`;
+        });
+
+        const aberta = sanfonasAbertas[idx] ? '' : 'hidden';
+        const setaRotate = sanfonasAbertas[idx] ? 'rotate-180' : '';
+
+        card.innerHTML = `
+          <div onclick="toggleSanfona(${idx})" class="p-4 flex justify-between items-center cursor-pointer ${concluida ? 'bg-green-100/60' : 'bg-gray-50'}">
+            <span class="font-bold text-base ${concluida ? 'text-green-800' : 'text-gray-800'}">${bloco.cidade}</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full ${concluida ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}">${concluidos}/${total}</span>
+              <span id="arrow-${idx}" class="text-gray-400 font-bold transform transition-transform ${setaRotate}">▼</span>
+            </div>
+          </div>
+          <div id="body-sanfona-${idx}" class="${aberta}">${htmlClientes}</div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleSanfona(idx) {
+      sanfonasAbertas[idx] = !sanfonasAbertas[idx];
+      renderizarCidades();
+    }
+
+    function abrirModalVenda(clienteId) {
+      if(rotaEncerrada) { alert("Esta rota foi encerrada e está salva no escritório. Edições bloqueadas."); return; }
+
+      for (let bloco of bancoDadosRota) {
+        let achado = bloco.clientes.find(c => c.id === clienteId);
+        if (achado) { clienteAtual = achado; break; }
+      }
+
+      document.getElementById('modal-cliente-nome').innerText = clienteAtual.nome;
+      document.getElementById('modal-cliente-endereco').innerText = clienteAtual.endereco;
+
+      itensVendaTemp = {};
+      PRODUTOS_CATALOGO.forEach(p => {
+        itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: p.precoPadrao };
+      });
+
+      if (clienteAtual.venda) {
+        document.getElementById('modal-pagamento').value = clienteAtual.venda.pagamento;
+        document.getElementById('modal-obs').value = clienteAtual.venda.obs || '';
+        document.getElementById('chk-nota').checked = !!clienteAtual.venda.precisaNota;
+        document.getElementById('chk-boleto').checked = !!clienteAtual.venda.precisaBoleto;
+        Object.assign(itensVendaTemp, clienteAtual.venda.itens);
+      } else {
+        document.getElementById('modal-pagamento').value = 'Dinheiro';
+        document.getElementById('modal-obs').value = '';
+        document.getElementById('chk-nota').checked = false;
+        document.getElementById('chk-boleto').checked = false;
+      }
+
+      renderizarListaProdutosModal();
+      document.getElementById('modal-venda').classList.remove('hidden');
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-venda').classList.add('hidden');
+    }
+
+    function renderizarListaProdutosModal() {
+      const container = document.getElementById('produtos-list');
+      container.innerHTML = '';
+
+      PRODUTOS_CATALOGO.forEach(prod => {
+        const item = itensVendaTemp[prod.id];
+        const row = document.createElement('div');
+        row.className = 'p-2.5 bg-gray-50 rounded-lg border border-gray-200 space-y-2';
+        row.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-xs text-gray-800">${prod.nome}</span>
+            <div class="flex items-center space-x-1">
+              <span class="text-[10px] font-semibold text-gray-500">R$:</span>
+              <input type="number" inputmode="decimal" step="0.50" value="${item.preco}" onchange="alterarPreco('${prod.id}', this.value)" class="w-16 p-1 text-xs font-bold text-right border border-gray-300 rounded bg-white">
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-1">
+              <span class="text-[10px] text-red-600 font-bold">Troca:</span>
+              <input type="number" inputmode="numeric" min="0" value="${item.troca}" onchange="alterarTroca('${prod.id}', this.value)" class="w-12 p-1 text-center font-semibold border border-red-200 rounded bg-red-50 text-red-700">
+            </div>
+
+            <div class="flex items-center border rounded-lg bg-white overflow-hidden shadow-sm">
+              <button onclick="alterarQtd('${prod.id}', -1)" class="px-3 py-1 bg-gray-100 font-bold text-gray-600 active:bg-gray-200">-</button>
+              <span class="px-3 font-bold text-sm" id="qtd-${prod.id}">${item.qtd}</span>
+              <button onclick="alterarQtd('${prod.id}', 1)" class="px-3 py-1 bg-blue-100 font-bold text-blue-700 active:bg-blue-200">+</button>
+            </div>
+          </div>`;
+        container.appendChild(row);
+      });
+
+      recalcularTotalModal();
+    }
+
+    function alterarPreco(prodId, val) {
+      const num = parseFloat(val.replace(',', '.'));
+      if(!isNaN(num) && num >= 0) {
+        itensVendaTemp[prodId].preco = num;
+        recalcularTotalModal();
+      }
+    }
+
+    function alterarTroca(prodId, val) {
+      const num = parseInt(val);
+      if(!isNaN(num) && num >= 0) {
+        if(num > itensVendaTemp[prodId].qtd) {
+          alert("A quantidade trocada não pode ser maior do que a entregue!");
+          renderizarListaProdutosModal();
+          return;
+        }
+        itensVendaTemp[prodId].troca = num;
+        recalcularTotalModal();
+      }
+    }
+
+    function alterarQtd(prodId, delta) {
+      if (itensVendaTemp[prodId].qtd + delta >= 0) {
+        itensVendaTemp[prodId].qtd += delta;
+        document.getElementById(`qtd-${prodId}`).innerText = itensVendaTemp[prodId].qtd;
+        recalcularTotalModal();
+      }
+    }
+
+    function recalcularTotalModal() {
+      let total = 0;
+      PRODUTOS_CATALOGO.forEach(p => {
+        const item = itensVendaTemp[p.id];
+        const qtdEfetiva = Math.max(0, item.qtd - item.troca);
+        total += qtdEfetiva * item.preco;
+      });
+      document.getElementById('modal-total-val').innerText = fmtMoeda(total);
+      return total;
+    }
+
+    function salvarVenda(teveVenda) {
+      if (!teveVenda) {
+        clienteAtual.status = 'nao_comprou';
+        clienteAtual.venda = null;
+      } else {
+        const total = recalcularTotalModal();
+        let temTroca = Object.values(itensVendaTemp).some(i => i.troca > 0);
+        let temQtd = Object.values(itensVendaTemp).some(i => i.qtd > 0);
+
+        if (!temQtd && !temTroca) {
+          alert('Adicione itens/trocas ou selecione "Não Comprou".');
+          return;
+        }
+
+        clienteAtual.status = 'vendido';
+        clienteAtual.venda = {
+          total: total,
+          pagamento: document.getElementById('modal-pagamento').value,
+          obs: document.getElementById('modal-obs').value,
+          precisaNota: document.getElementById('chk-nota').checked,
+          precisaBoleto: document.getElementById('chk-boleto').checked,
+          itens: JSON.parse(JSON.stringify(itensVendaTemp))
+        };
+      }
+
+      salvarEstadoMemoria();
+      fecharModal();
+      renderizarCidades();
+    }
+
+    function concluirFechamentoDia() {
+      let pendentes = 0, totalGeral = 0, totalDinheiro = 0, totalPix = 0, totalPrazo = 0;
+      let resumoObs = [];
+
+      bancoDadosRota.forEach(bloco => {
+        bloco.clientes.forEach(cli => {
+          if (cli.status === 'pendente') pendentes++;
+          if (cli.status === 'vendido' && cli.venda) {
+            totalGeral += cli.venda.total;
+            if (cli.venda.pagamento === 'Dinheiro') totalDinheiro += cli.venda.total;
+            if (cli.venda.pagamento === 'PIX') totalPix += cli.venda.total;
+            if (cli.venda.pagamento === 'Nota a Prazo') totalPrazo += cli.venda.total;
+
+            let docs = [];
+            if (cli.venda.precisaNota) docs.push('NF');
+            if (cli.venda.precisaBoleto) docs.push('Boleto');
+            let strDocs = docs.length ? ` [${docs.join('+')}]` : '';
+
+            if (cli.venda.obs || docs.length) {
+              resumoObs.push(`• ${cli.nome}${strDocs}: ${cli.venda.obs || 'Sem obs'}`);
+            }
+          }
+        });
+      });
+
+      let aviso = pendentes > 0 
+        ? `Existem ${pendentes} clientes pendentes.\nDeseja encerrar e travar o dia mesmo assim?`
+        : "Deseja concluir o fechamento do dia? O aplicativo será travado para edições no celular.";
+
+      if (!confirm(aviso)) return;
+
+      rotaEncerrada = true;
+      salvarEstadoMemoria();
+      travarAplicativo();
+
+      let vend = document.getElementById('header-vendedor').innerText;
+      let rota = document.getElementById('header-rota').innerText;
+
+      let msg = `*FECHAMENTO DE ROTA - ${vend}*\n📅 Rota: ${rota}\n\n*RESUMO FINANCEIRO:*\n💵 Dinheiro: ${fmtMoeda(totalDinheiro)}\n📱 PIX: ${fmtMoeda(totalPix)}\n📝 A Prazo: ${fmtMoeda(totalPrazo)}\n💰 *TOTAL GERAL: ${fmtMoeda(totalGeral)}*\n\n`;
+      if (resumoObs.length) msg += `*OBSERVAÇÕES / SOLICITAÇÕES:*\n` + resumoObs.join('\n') + `\n\n`;
+      msg += `_Fechamento concluído no celular e enviado ao escritório._`;
+
+      const numEscritorio = "5543991509888"; 
+      window.open(`https://api.whatsapp.com/send?phone=${numEscritorio}&text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function travarAplicativo() {
+      document.getElementById('box-fechamento').innerHTML = `
+        <div class="p-3 bg-red-100 text-red-800 text-center font-bold text-xs rounded-lg border border-red-300">
+          🔒 DIA ENCERRADO. Rota salva e travada para edição no celular.
+        </div>`;
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker Registrado com Sucesso!'))
+          .catch((err) => console.error('Falha ao registrar Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>
