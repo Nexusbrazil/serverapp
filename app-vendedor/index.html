@@ -34,27 +34,16 @@
       
       <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Vendedor</label>
-        <select id="select-vendedor" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
-          <option value="">-- Selecione o Vendedor --</option>
-          <option value="Carlos Silva">Carlos Silva (Titular)</option>
-          <option value="João Santos">João Santos (Titular)</option>
-          <option value="Claudemiro (Cobertura)">Claudemiro (Cobertura)</option>
+        <select id="select-vendedor" onchange="carregarCidadesDoVendedor(this.value)" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+          <option value="">Carregando vendedores...</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Dia da Semana / Rota</label>
-        <select id="select-rota" onchange="toggleRotaMistaUI()" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
-          <option value="Terça-feira - Rota Jandaia / Mandaguari / Marumbi">Terça-feira: Jandaia, Mandaguari & Marumbi</option>
-          <option value="Quarta-feira - Rota Apucarana / Cambira">Quarta-feira: Apucarana & Cambira</option>
-          <option value="MISTA">Mista / Personalizada (Escolher Cidades)</option>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Cidade / Rota</label>
+        <select id="select-rota" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+          <option value="">Selecione o Vendedor primeiro</option>
         </select>
-      </div>
-
-      <!-- PAINEL CIDADES MISTAS -->
-      <div id="box-cidades-mistas" class="hidden p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
-        <label class="block text-xs font-bold text-blue-900">Selecione as Cidades da Rota Mista:</label>
-        <div id="checklist-cidades" class="grid grid-cols-2 gap-2 text-xs"></div>
       </div>
 
       <button onclick="iniciarRota()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg">
@@ -66,7 +55,7 @@
   <!-- PASSO 2: CIDADES E CLIENTES -->
   <main id="step-rota" class="p-4 max-w-md mx-auto space-y-3 hidden">
     <div class="flex justify-between items-center mb-1">
-      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Clientes da Rota</span>
       <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota / Vendedor</button>
     </div>
 
@@ -87,7 +76,7 @@
       <div class="flex justify-between items-start border-b pb-3">
         <div>
           <h3 class="font-bold text-lg text-gray-900" id="modal-cliente-nome">Nome do Cliente</h3>
-          <p class="text-xs text-gray-500" id="modal-cliente-endereco">Endereço do cliente</p>
+          <p class="text-xs text-gray-500" id="modal-cliente-endereco">Atendimento Rota</p>
         </div>
         <button onclick="fecharModal()" class="text-gray-400 font-bold text-xl px-2">✕</button>
       </div>
@@ -108,7 +97,7 @@
 
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Observações / Detalhes</label>
-          <textarea id="modal-obs" rows="2" placeholder="Ex: Deixou pago nota antiga de R$ 50; trocas com avaria..." class="w-full p-2.5 text-xs bg-gray-50 border border-gray-300 rounded-lg"></textarea>
+          <textarea id="modal-obs" rows="2" placeholder="Ex: Deixou pago nota antiga; trocas com avaria..." class="w-full p-2.5 text-xs bg-gray-50 border border-gray-300 rounded-lg"></textarea>
         </div>
 
         <!-- SELEÇÃO DE NOTA E BOLETO PARA O ESCRITÓRIO -->
@@ -143,6 +132,8 @@
   </div>
 
   <script>
+    const URL_API = "https://server-sux7.onrender.com/api";
+
     const PRODUTOS_CATALOGO = [
       { id: '330ML', nome: 'Suco 330ml', precoPadrao: 3.50 },
       { id: '900ML', nome: 'Suco 900ml', precoPadrao: 7.00 },
@@ -150,40 +141,6 @@
       { id: 'AGUA_SG', nome: 'Água Sem Gás 500ml', precoPadrao: 1.50 },
       { id: 'AGUA_CG', nome: 'Água Com Gás 500ml', precoPadrao: 2.00 },
       { id: 'GELO', nome: 'Saco de Gelo 5kg', precoPadrao: 10.00 }
-    ];
-
-    const BASE_DADOS_INICIAL = [
-      {
-        cidade: 'Jandaia do Sul',
-        clientes: [
-          { id: 101, nome: 'Mercado Bom Preço', endereco: 'Av. Tancredo Neves, 450', status: 'pendente', venda: null },
-          { id: 102, nome: 'Panificadora Central', endereco: 'Rua Placido Caldas, 112', status: 'pendente', venda: null }
-        ]
-      },
-      {
-        cidade: 'Mandaguari',
-        clientes: [
-          { id: 201, nome: 'Supermercado Paraná', endereco: 'Rua Amazonas, 890', status: 'pendente', venda: null }
-        ]
-      },
-      {
-        cidade: 'Marumbi',
-        clientes: [
-          { id: 501, nome: 'Mercearia Marumbi', endereco: 'Praça Matriz, 10', status: 'pendente', venda: null }
-        ]
-      },
-      {
-        cidade: 'Apucarana',
-        clientes: [
-          { id: 401, nome: 'Mercado Cidade Alta', endereco: 'Rua Rio de Janeiro, 550', status: 'pendente', venda: null }
-        ]
-      },
-      {
-        cidade: 'Cambira',
-        clientes: [
-          { id: 301, nome: 'Mercado Cambira', endereco: 'Av. Brasil, 300', status: 'pendente', venda: null }
-        ]
-      }
     ];
 
     let bancoDadosRota = [];
@@ -195,26 +152,54 @@
     const fmtMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     window.onload = function() {
-      montarChecklistCidadesMistas();
+      carregarVendedoresAPI();
       carregarEstadoSalvo();
     };
 
-    function montarChecklistCidadesMistas() {
-      const box = document.getElementById('checklist-cidades');
-      box.innerHTML = '';
-      BASE_DADOS_INICIAL.forEach(c => {
-        box.innerHTML += `
-          <label class="flex items-center space-x-1.5 cursor-pointer">
-            <input type="checkbox" value="${c.cidade}" class="chk-cidade-mista rounded text-blue-600" checked>
-            <span>${c.cidade}</span>
-          </label>`;
-      });
+    // Carrega vendedores do Supabase via Render
+    async function carregarVendedoresAPI() {
+      const selectVend = document.getElementById('select-vendedor');
+      try {
+        const res = await fetch(`${URL_API}/vendedores-cidades`);
+        const vendedores = await res.json();
+
+        selectVend.innerHTML = '<option value="">-- Selecione o Vendedor --</option>';
+        vendedores.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.textContent = v;
+          selectVend.appendChild(opt);
+        });
+      } catch (e) {
+        console.error("Erro ao carregar vendedores:", e);
+        selectVend.innerHTML = '<option value="">Erro ao carregar vendedores</option>';
+      }
     }
 
-    function toggleRotaMistaUI() {
-      const tipo = document.getElementById('select-rota').value;
-      const box = document.getElementById('box-cidades-mistas');
-      box.classList.toggle('hidden', tipo !== 'MISTA');
+    // Carrega cidades autorizadas do vendedor
+    async function carregarCidadesDoVendedor(vendedor) {
+      const selectRota = document.getElementById('select-rota');
+      if (!vendedor) {
+        selectRota.innerHTML = '<option value="">Selecione o Vendedor primeiro</option>';
+        return;
+      }
+
+      selectRota.innerHTML = '<option value="">Carregando cidades...</option>';
+      try {
+        const res = await fetch(`${URL_API}/vendedores-cidades?vendedor=${encodeURIComponent(vendedor)}`);
+        const cidades = await res.json();
+
+        selectRota.innerHTML = '<option value="TODAS">Todas as Cidades</option>';
+        cidades.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          selectRota.appendChild(opt);
+        });
+      } catch (e) {
+        console.error("Erro ao carregar cidades:", e);
+        selectRota.innerHTML = '<option value="">Erro ao carregar cidades</option>';
+      }
     }
 
     function carregarEstadoSalvo() {
@@ -225,12 +210,8 @@
           bancoDadosRota = dados.bancoDadosRota || [];
           rotaEncerrada = dados.statusRota === 'CONCLUIDA';
 
-          document.getElementById('select-vendedor').value = dados.vendedorRaw || '';
-          document.getElementById('select-rota').value = dados.rotaRaw || '';
           document.getElementById('header-vendedor').innerText = dados.vendedor || 'Vendedor';
           document.getElementById('header-rota').innerText = dados.rota || '';
-
-          toggleRotaMistaUI();
 
           document.getElementById('step-config').classList.add('hidden');
           document.getElementById('step-rota').classList.remove('hidden');
@@ -238,19 +219,14 @@
 
           renderizarCidades();
           if (rotaEncerrada) travarAplicativo();
-        } else {
-          bancoDadosRota = JSON.parse(JSON.stringify(BASE_DADOS_INICIAL));
         }
       } catch (e) {
         localStorage.removeItem('pwa_vendedor_state');
-        bancoDadosRota = JSON.parse(JSON.stringify(BASE_DADOS_INICIAL));
       }
     }
 
     function salvarEstadoMemoria() {
       const estado = {
-        vendedorRaw: document.getElementById('select-vendedor').value,
-        rotaRaw: document.getElementById('select-rota').value,
         vendedor: document.getElementById('header-vendedor').innerText,
         rota: document.getElementById('header-rota').innerText,
         bancoDadosRota: bancoDadosRota,
@@ -260,48 +236,58 @@
     }
 
     function resetarDadosSimulacao() {
-      if(confirm("Deseja resetar toda a simulação do dia?")) {
+      if(confirm("Deseja resetar toda a rota do dia?")) {
         localStorage.removeItem('pwa_vendedor_state');
         location.reload();
       }
     }
 
-    function iniciarRota() {
-      const temVendas = bancoDadosRota.some(b => b.clientes.some(c => c.status !== 'pendente'));
-      if (temVendas && !confirm("Atenção: Já existem vendas registradas hoje. Reiniciar a rota apagará esses lançamentos. Deseja continuar?")) {
-        return;
-      }
-
+    async function iniciarRota() {
       const vend = document.getElementById('select-vendedor').value;
-      const tipoRota = document.getElementById('select-rota').value;
-      if(!vend) { alert('Selecione o vendedor!'); return; }
+      const cidadeSel = document.getElementById('select-rota').value;
 
-      let cidadesFiltradas = [];
-      let labelRota = tipoRota;
+      if(!vend || !cidadeSel) { alert('Selecione o vendedor e a cidade/rota!'); return; }
 
-      if (tipoRota === 'MISTA') {
-        const sel = Array.from(document.querySelectorAll('.chk-cidade-mista:checked')).map(cb => cb.value);
-        if (sel.length === 0) { alert('Selecione ao menos 1 cidade!'); return; }
-        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => sel.includes(c.cidade));
-        labelRota = `Mista: ${sel.join(', ')}`;
-      } else if (tipoRota.includes('Jandaia')) {
-        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => ['Jandaia do Sul', 'Mandaguari', 'Marumbi'].includes(c.cidade));
-      } else {
-        cidadesFiltradas = BASE_DADOS_INICIAL.filter(c => ['Apucarana', 'Cambira'].includes(c.cidade));
+      try {
+        // Busca clientes no banco pelo vendedor e cidade
+        let res;
+        if (cidadeSel === 'TODAS') {
+          res = await fetch(`${URL_API}/vendedores-cidades?vendedor=${encodeURIComponent(vend)}`);
+          const listaCidades = await res.json();
+          bancoDadosRota = [];
+
+          for (let cid of listaCidades) {
+            const resCli = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&cidade=${encodeURIComponent(cid)}`);
+            const clientes = await resCli.json();
+            if (clientes.length > 0) {
+              bancoDadosRota.push({
+                cidade: cid,
+                clientes: clientes.map(c => ({ id: c.id, nome: c.nome_cliente, status: 'pendente', venda: null }))
+              });
+            }
+          }
+        } else {
+          res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&cidade=${encodeURIComponent(cidadeSel)}`);
+          const clientes = await res.json();
+          bancoDadosRota = [{
+            cidade: cidadeSel,
+            clientes: clientes.map(c => ({ id: c.id, nome: c.nome_cliente, status: 'pendente', venda: null }))
+          }];
+        }
+
+        rotaEncerrada = false;
+        document.getElementById('header-vendedor').innerText = vend;
+        document.getElementById('header-rota').innerText = cidadeSel;
+
+        document.getElementById('step-config').classList.add('hidden');
+        document.getElementById('step-rota').classList.remove('hidden');
+        document.getElementById('box-fechamento').classList.remove('hidden');
+
+        salvarEstadoMemoria();
+        renderizarCidades();
+      } catch (e) {
+        alert("Erro ao buscar rota do servidor: " + e.message);
       }
-
-      bancoDadosRota = JSON.parse(JSON.stringify(cidadesFiltradas));
-      rotaEncerrada = false;
-
-      document.getElementById('header-vendedor').innerText = vend;
-      document.getElementById('header-rota').innerText = labelRota;
-
-      document.getElementById('step-config').classList.add('hidden');
-      document.getElementById('step-rota').classList.remove('hidden');
-      document.getElementById('box-fechamento').classList.remove('hidden');
-
-      salvarEstadoMemoria();
-      renderizarCidades();
     }
 
     function voltarConfig() {
@@ -337,14 +323,13 @@
             <div onclick="abrirModalVenda(${cli.id})" class="p-3 bg-white border-b last:border-b-0 active:bg-gray-50 flex justify-between items-center cursor-pointer">
               <div>
                 <p class="font-bold text-sm text-gray-800">${cli.nome}</p>
-                <p class="text-xs text-gray-400">${cli.endereco}</p>
               </div>
               <div>${badge}</div>
             </div>`;
         });
 
-        const aberta = sanfonasAbertas[idx] ? '' : 'hidden';
-        const setaRotate = sanfonasAbertas[idx] ? 'rotate-180' : '';
+        const aberta = sanfonasAbertas[idx] !== false ? '' : 'hidden';
+        const setaRotate = sanfonasAbertas[idx] !== false ? 'rotate-180' : '';
 
         card.innerHTML = `
           <div onclick="toggleSanfona(${idx})" class="p-4 flex justify-between items-center cursor-pointer ${concluida ? 'bg-green-100/60' : 'bg-gray-50'}">
@@ -360,7 +345,7 @@
     }
 
     function toggleSanfona(idx) {
-      sanfonasAbertas[idx] = !sanfonasAbertas[idx];
+      sanfonasAbertas[idx] = sanfonasAbertas[idx] === false ? true : false;
       renderizarCidades();
     }
 
@@ -373,7 +358,6 @@
       }
 
       document.getElementById('modal-cliente-nome').innerText = clienteAtual.nome;
-      document.getElementById('modal-cliente-endereco').innerText = clienteAtual.endereco;
 
       itensVendaTemp = {};
       PRODUTOS_CATALOGO.forEach(p => {
@@ -506,9 +490,8 @@
       renderizarCidades();
     }
 
-    function concluirFechamentoDia() {
+    async function concluirFechamentoDia() {
       let pendentes = 0, totalGeral = 0, totalDinheiro = 0, totalPix = 0, totalPrazo = 0;
-      let resumoObs = [];
 
       bancoDadosRota.forEach(bloco => {
         bloco.clientes.forEach(cli => {
@@ -518,44 +501,51 @@
             if (cli.venda.pagamento === 'Dinheiro') totalDinheiro += cli.venda.total;
             if (cli.venda.pagamento === 'PIX') totalPix += cli.venda.total;
             if (cli.venda.pagamento === 'Nota a Prazo') totalPrazo += cli.venda.total;
-
-            let docs = [];
-            if (cli.venda.precisaNota) docs.push('NF');
-            if (cli.venda.precisaBoleto) docs.push('Boleto');
-            let strDocs = docs.length ? ` [${docs.join('+')}]` : '';
-
-            if (cli.venda.obs || docs.length) {
-              resumoObs.push(`• ${cli.nome}${strDocs}: ${cli.venda.obs || 'Sem obs'}`);
-            }
           }
         });
       });
 
       let aviso = pendentes > 0 
-        ? `Existem ${pendentes} clientes pendentes.\nDeseja encerrar e travar o dia mesmo assim?`
-        : "Deseja concluir o fechamento do dia? O aplicativo será travado para edições no celular.";
+        ? `Existem ${pendentes} clientes pendentes.\nDeseja encerrar e enviar a rota mesmo assim?`
+        : "Deseja concluir o fechamento do dia e enviar para o painel do escritório?";
 
       if (!confirm(aviso)) return;
 
-      rotaEncerrada = true;
-      salvarEstadoMemoria();
-      travarAplicativo();
+      const payload = {
+        vendedor: document.getElementById('header-vendedor').innerText,
+        rota: document.getElementById('header-rota').innerText,
+        totalGeral,
+        totalDinheiro,
+        totalPix,
+        totalPrazo,
+        detalhesRota: bancoDadosRota
+      };
 
-      let vend = document.getElementById('header-vendedor').innerText;
-      let rota = document.getElementById('header-rota').innerText;
+      try {
+        const res = await fetch(`${URL_API}/finalizar-rota`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-      let msg = `*FECHAMENTO DE ROTA - ${vend}*\n📅 Rota: ${rota}\n\n*RESUMO FINANCEIRO:*\n💵 Dinheiro: ${fmtMoeda(totalDinheiro)}\n📱 PIX: ${fmtMoeda(totalPix)}\n📝 A Prazo: ${fmtMoeda(totalPrazo)}\n💰 *TOTAL GERAL: ${fmtMoeda(totalGeral)}*\n\n`;
-      if (resumoObs.length) msg += `*OBSERVAÇÕES / SOLICITAÇÕES:*\n` + resumoObs.join('\n') + `\n\n`;
-      msg += `_Fechamento concluído no celular e enviado ao escritório._`;
-
-      const numEscritorio = "5543991509888"; 
-      window.open(`https://api.whatsapp.com/send?phone=${numEscritorio}&text=${encodeURIComponent(msg)}`, '_blank');
+        if (res.ok) {
+          rotaEncerrada = true;
+          salvarEstadoMemoria();
+          travarAplicativo();
+          alert("Rota enviada com sucesso para o painel do escritório!");
+        } else {
+          alert("Aviso: Falha ao enviar rota para o servidor. Verifique sua conexão.");
+        }
+      } catch (e) {
+        console.error("Erro no envio:", e);
+        alert("Erro de conexão com o servidor.");
+      }
     }
 
     function travarAplicativo() {
       document.getElementById('box-fechamento').innerHTML = `
         <div class="p-3 bg-red-100 text-red-800 text-center font-bold text-xs rounded-lg border border-red-300">
-          🔒 DIA ENCERRADO. Rota salva e travada para edição no celular.
+          🔒 DIA ENCERRADO. Rota salva e travada no servidor.
         </div>`;
     }
   </script>
