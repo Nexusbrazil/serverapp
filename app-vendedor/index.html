@@ -383,7 +383,15 @@ async function salvarClienteAoVivo(dadosCliente) {
       return total;
     }
 
-    function salvarVenda(teveVenda) {
+    async function salvarVenda(teveVenda) {
+      let cidadeCliente = "";
+  
+  for (let bloco of bancoDadosRota) {
+    if (bloco.clientes.some(c => c.id === clienteAtual.id)) {
+      cidadeCliente = bloco.cidade;
+      break;
+    }
+  }
       if (!teveVenda) {
         clienteAtual.status = 'nao_comprou';
         clienteAtual.venda = null;
@@ -398,6 +406,23 @@ async function salvarClienteAoVivo(dadosCliente) {
           itens: JSON.parse(JSON.stringify(itensVendaTemp))
         };
       }
+      // Disparo em tempo real para o Supabase
+  await salvarClienteAoVivo({
+    vendedor: document.getElementById('header-vendedor').innerText,
+    clienteId: clienteAtual.id,
+    clienteNome: clienteAtual.nome,
+    cidade: cidadeCliente,
+    statusAtendimento: teveVenda ? 'CONCLUIDO' : 'NAO_COMPROU',
+    valorTotal: teveVenda ? clienteAtual.venda.total : 0,
+    formaPagamento: teveVenda ? clienteAtual.venda.pagamento : 'N/A',
+    observacao: document.getElementById('modal-obs').value,
+    qtd_330ml: teveVenda ? (itensVendaTemp['330ML']?.qtd || 0) : 0,
+    qtd_900ml: teveVenda ? (itensVendaTemp['900ML']?.qtd || 0) : 0,
+    qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
+    qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
+    qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
+    qtd_agua_15l: teveVenda ? (itensVendaTemp['AGUA_15L']?.qtd || 0) : 0
+  });
       fecharModal();
       renderizarCidades();
     }
@@ -474,8 +499,8 @@ async function salvarClienteAoVivo(dadosCliente) {
     };
 
     // 'upsert' faz o envio em tempo real e permite reedição do mesmo cliente
-    const { error } = await supabase
-      .from('vendas_fechamento')
+    const { error } = await supabaseClient
+      .from('fechamento')
       .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
 
     if (error) throw error;
