@@ -124,7 +124,7 @@
 const SUPABASE_URL = "https://podnijlrofkhcbbqliem.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
 
     const PRODUTOS_CATALOGO = [
