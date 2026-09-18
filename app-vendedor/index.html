@@ -120,11 +120,16 @@
   </div>
 
   <script>
+    // O Netlify injeta essas variáveis automaticamente se você já cadastrou lá no painel
+const SUPABASE_URL = "https://podnijlrofkhcbbqliem.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
 
     const PRODUTOS_CATALOGO = [
-  { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },
-  { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },
+  { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },  
+  { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },            
   { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
   { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
   { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
