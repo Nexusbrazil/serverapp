@@ -8,6 +8,8 @@
   <meta name="theme-color" content="#1d4ed8">
   <script src="https://cdn.tailwindcss.com"></script>
   <style> body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; } </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
 </head>
 <body class="bg-gray-100 text-gray-800 pb-24 select-none">
 
@@ -414,6 +416,39 @@
       document.getElementById('step-rota').classList.add('hidden');
       document.getElementById('box-fechamento').classList.add('hidden');
     }
+    // Função para salvar e atualizar cada cliente ao vivo no Supabase
+async function salvarClienteAoVivo(dadosCliente) {
+  try {
+    const payload = {
+      vendedor_nome: dadosCliente.vendedor,
+      cliente_id: dadosCliente.clienteId,
+      cliente_nome: dadosCliente.clienteNome,
+      cidade: dadosCliente.cidade,
+      data_atendimento: new Date().toISOString(),
+      qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
+      qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
+      qtd_uva: Number(dadosCliente.qtd_uva || 0),
+      qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
+      qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
+      qtd_gelo: Number(dadosCliente.qtd_gelo || 0),
+      qtd_agua_15l: Number(dadosCliente.qtd_agua_15l || 0),
+      forma_pagamento: dadosCliente.formaPagamento,
+      valor_total: Number(dadosCliente.valorTotal || 0),
+      observacao: dadosCliente.observacao || '',
+      status: 'CONCLUIDO'
+    };
+
+    // 'upsert' faz o envio em tempo real e permite reedição do mesmo cliente
+    const { error } = await supabase
+      .from('vendas_fechamento')
+      .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
+
+    if (error) throw error;
+    console.log('Cliente sincronizado ao vivo!');
+  } catch (err) {
+    console.error('Erro ao enviar para o Supabase:', err);
+  }
+}
   </script>
 </body>
 </html>
