@@ -500,7 +500,7 @@ async function salvarClienteAoVivo(dadosCliente) {
 
     // 'upsert' faz o envio em tempo real e permite reedição do mesmo cliente
     const { error } = await supabaseClient
-      .from('fechamento')
+      .from('fechamentos')
       .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
 
     if (error) throw error;
