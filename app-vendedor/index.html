@@ -139,8 +139,10 @@ async function salvarClienteAoVivo(dadosCliente) {
       qtd_uva: Number(dadosCliente.qtd_uva || 0),
       qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
       qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
-      qtd_gelo: Number(dadosCliente.qtd_gelo || 0),
       qtd_agua_15l: Number(dadosCliente.qtd_agua_15l || 0),
+      troca_330ml: Number(dadosCliente.troca_330ml || 0),
+      troca_900ml: Number(dadosCliente.troca_900ml || 0),
+      troca_uva: Number(dadosCliente.troca_uva || 0),
       forma_pagamento: dadosCliente.formaPagamento,
       valor_total: Number(dadosCliente.valorTotal || 0),
       observacao: dadosCliente.observacao || '',
@@ -421,7 +423,10 @@ async function salvarClienteAoVivo(dadosCliente) {
     qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
     qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
     qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
-    qtd_agua_15l: teveVenda ? (itensVendaTemp['AGUA_15L']?.qtd || 0) : 0
+    qtd_agua_15l: teveVenda ? (itensVendaTemp['AGUA_15L']?.qtd || 0) : 0,
+    troca_330ml: teveVenda ? (itensVendaTemp['330ML']?.troca || 0) : 0,
+    troca_900ml: teveVenda ? (itensVendaTemp['900ML']?.troca || 0) : 0,
+    troca_uva: teveVenda ? (itensVendaTemp['UVA']?.troca || 0) : 0
   });
       fecharModal();
       renderizarCidades();
