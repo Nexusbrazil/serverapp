@@ -61,7 +61,7 @@
 
   <!-- BOTÃO FIXO DE FECHAMENTO -->
   <div id="box-fechamento" class="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-300 shadow-lg max-w-md mx-auto hidden z-20">
-    <button onclick="concluirFechamentoDia()" class="w-full bg-blue-900 active:bg-blue-950 text-white font-black p-3.5 rounded-xl text-sm shadow-md">
+    <button onclick="concluirEBloquearFechamentoDia()" class="w-full bg-blue-900 active:bg-blue-950 text-white font-black p-3.5 rounded-xl text-sm shadow-md">
       🔒 CONCLUIR FECHAMENTO DO DIA
     </button>
   </div>
@@ -431,50 +431,7 @@ async function salvarClienteAoVivo(dadosCliente) {
       fecharModal();
       renderizarCidades();
     }
-
-    async function concluirFechamentoDia() {
-      let totalGeral = 0, totalDinheiro = 0, totalPix = 0, totalPrazo = 0;
-
-      bancoDadosRota.forEach(bloco => {
-        bloco.clientes.forEach(cli => {
-          if (cli.status === 'vendido' && cli.venda) {
-            totalGeral += cli.venda.total;
-            if (cli.venda.pagamento === 'Dinheiro') totalDinheiro += cli.venda.total;
-            if (cli.venda.pagamento === 'PIX') totalPix += cli.venda.total;
-            if (cli.venda.pagamento === 'Nota a Prazo') totalPrazo += cli.venda.total;
-          }
-        });
-      });
-
-      if (!confirm("Deseja concluir o fechamento do dia e enviar para o painel do escritório?")) return;
-
-      const payload = {
-        vendedor: document.getElementById('header-vendedor').innerText,
-        rota: document.getElementById('header-rota').innerText,
-        totalGeral,
-        totalDinheiro,
-        totalPix,
-        totalPrazo,
-        detalhesRota: bancoDadosRota
-      };
-
-      try {
-        const res = await fetch(`${URL_API}/finalizar-rota`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (res.ok) {
-          alert("Fechamento enviado com sucesso para o escritório!");
-        } else {
-          alert("Erro ao conectar com o servidor.");
-        }
-      } catch (e) {
-        alert("Erro de conexão.");
-      }
-    }
-
+    
     function resetarDadosSimulacao() { location.reload(); }
     function voltarConfig() {
       document.getElementById('step-config').classList.remove('hidden');
