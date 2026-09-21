@@ -247,6 +247,8 @@ async function salvarClienteAoVivo(dadosCliente) {
     console.error('Erro ao enviar para o Supabase:', err);
   }
 }
+
+    
     const PRODUTOS_CATALOGO = [
   { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },  
   { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },            
@@ -254,6 +256,26 @@ async function salvarClienteAoVivo(dadosCliente) {
   { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
   { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
 ];
+    const PRECOS_ESPECIAIS_VENDEDOR = {
+  "GUSTAVO": {
+    "330ML": 5.30,
+    // "900ML": 11.00,
+    // "UVA": 5.50,
+    // "FARDO_SG": 12.00,
+    // "FARDO_CG": 14.00
+  }
+  // Futuramente, para adicionar outro vendedor, basta copiar a estrutura:
+  // "NOME_DO_VENDEDOR": {
+  //   "330ML": 5.00,
+  //   "900ML": 10.00
+  // }
+};
+    // Fator de conversão de caixas para unidades na Carga Nova
+// Apenas produtos definidos aqui serão digitados em caixas no formulário
+const CONVERSAO_CAIXAS = {
+  '330ML': 80, // 1 caixa = 80 unidades
+  '900ML': 25  // 1 caixa = 25 unidades
+};
 
     let bancoDadosRota = [];
     let clienteAtual = null;
@@ -395,8 +417,25 @@ async function salvarClienteAoVivo(dadosCliente) {
 
       itensVendaTemp = {};
       PRODUTOS_CATALOGO.forEach(p => {
-        itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: p.precoPadrao };
-      });
+        let precoAplicado = p.precoPadrao;
+
+    // 1. Aplica o Preço Especial do Vendedor (se existir)
+    for (let nomeVend in PRECOS_ESPECIAIS_VENDEDOR) {
+      if (vendedorAtual.includes(nomeVend)) {
+        if (PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id] !== undefined) {
+          precoAplicado = PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id];
+        }
+      }
+    }
+
+    // 2. (Evolução Futura): Se o cliente específico tiver preço próprio, ele sobrescreve aqui
+    if (clienteAtual.precosEspeciais && clienteAtual.precosEspeciais[p.id] !== undefined) {
+      precoAplicado = clienteAtual.precosEspeciais[p.id];
+    }
+
+    itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: precoAplicado };
+  });
+
 
       if (clienteAtual.venda) {
         document.getElementById('modal-pagamento').value = clienteAtual.venda.pagamento;
@@ -706,14 +745,18 @@ function abrirModalEstoque() {
 
 async function salvarEstoqueInicial() {
   const vendedorAtual = document.getElementById('header-vendedor').innerText;
+
+  const cxCarga330ml = Number(document.getElementById('carga_330ml').value) || 0;
+  const cxCarga900ml = Number(document.getElementById('carga_900ml').value) || 0;
+  
   // Pega os valores, se estiver vazio vira 0
   const dadosEstoque = {
     vendedor_nome: vendedorAtual, // Certifique-se que esta variável existe no seu escopo global
     data_fechamento: new Date().toISOString().split('T')[0], // Data de hoje formato YYYY-MM-DD
     retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
-    carga_330ml: Number(document.getElementById('carga_330ml').value) || 0,
+    carga_330ml:cxCarga330ml * (CONVERSAO_CAIXAS['330ML'] || 80),
     retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
-    carga_900ml: Number(document.getElementById('carga_900ml').value) || 0,
+    carga_900ml:cxCarga900ml * (CONVERSAO_CAIXAS['900ML'] || 25),
     retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
     carga_uva: Number(document.getElementById('carga_uva').value) || 0,
     retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
