@@ -55,6 +55,38 @@
       <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
       <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota / Vendedor</button>
     </div>
+    
+    <div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+  <button onclick="toggleDespesas()" class="w-full flex justify-between items-center p-4 font-bold text-slate-700 bg-slate-100 rounded-t-lg">
+    <span>💸 Lançar Despesas do Dia</span>
+    <span id="icone-despesa">▼</span>
+  </button>
+  
+  <div id="conteudo-despesas" class="hidden p-4 space-y-3">
+    <div class="flex gap-3">
+      <div class="w-1/2">
+        <label class="block text-xs font-bold text-slate-600 mb-1">Combustível (R$)</label>
+        <input type="number" id="despesa_combustivel" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="w-1/2">
+        <label class="block text-xs font-bold text-slate-600 mb-1">Almoço (R$)</label>
+        <input type="number" id="despesa_almoco" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+    
+    <div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Outras Despesas (R$)</label>
+      <input type="number" id="despesa_outras_valor" class="w-full p-2 border rounded mb-2" step="0.01" min="0" placeholder="0.00">
+      
+      <label class="block text-xs font-bold text-slate-600 mb-1">Observação (Obrigatório se houver valor)</label>
+      <input type="text" id="despesa_outras_obs" class="w-full p-2 border rounded" placeholder="Ex: Pedágio, óleo, conserto...">
+    </div>
+
+    <button onclick="salvarDespesas()" class="w-full mt-2 bg-slate-800 text-white font-bold py-2 rounded text-sm">
+      Salvar Despesas
+    </button>
+  </div>
+</div>
 
     <div id="cidades-container" class="space-y-3"></div>
   </main>
@@ -100,39 +132,6 @@
 
     <button onclick="salvarEstoqueInicial()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded text-sm transition">
       Confirmar Estoque e Iniciar Rota
-    </button>
-  </div>
-</div>
-
-  <!-- SEÇÃO DE DESPESAS DO DIA -->
-<div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-  <button onclick="toggleDespesas()" class="w-full flex justify-between items-center p-4 font-bold text-slate-700 bg-slate-100 rounded-t-lg">
-    <span>💸 Lançar Despesas do Dia</span>
-    <span id="icone-despesa">▼</span>
-  </button>
-  
-  <div id="conteudo-despesas" class="hidden p-4 space-y-3">
-    <div class="flex gap-3">
-      <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-600 mb-1">Combustível (R$)</label>
-        <input type="number" id="despesa_combustivel" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
-      </div>
-      <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-600 mb-1">Almoço (R$)</label>
-        <input type="number" id="despesa_almoco" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
-      </div>
-    </div>
-    
-    <div>
-      <label class="block text-xs font-bold text-slate-600 mb-1">Outras Despesas (R$)</label>
-      <input type="number" id="despesa_outras_valor" class="w-full p-2 border rounded mb-2" step="0.01" min="0" placeholder="0.00">
-      
-      <label class="block text-xs font-bold text-slate-600 mb-1">Observação (Obrigatório se houver valor)</label>
-      <input type="text" id="despesa_outras_obs" class="w-full p-2 border rounded" placeholder="Ex: Pedágio, óleo, conserto...">
-    </div>
-
-    <button onclick="salvarDespesas()" class="w-full mt-2 bg-slate-800 text-white font-bold py-2 rounded text-sm">
-      Salvar Despesas
     </button>
   </div>
 </div>
