@@ -408,6 +408,8 @@ const CONVERSAO_CAIXAS = {
     }
 
     function abrirModalVenda(clienteId) {
+      const vendedorAtual = (document.getElementById('header-vendedor')?.innerText || '').toUpperCase();
+      
       for (let bloco of bancoDadosRota) {
         let achado = bloco.clientes.find(c => c.id === clienteId);
         if (achado) { clienteAtual = achado; break; }
