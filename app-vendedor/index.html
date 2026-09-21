@@ -694,9 +694,8 @@ const CONVERSAO_CAIXAS = {
   janela.document.write(conteudo);
   janela.document.close();
 }
-    
-    
-// Lógica de finalizar e resetar o aplicativo
+
+    // Lógica de finalizar e resetar o aplicativo
 async function concluirEBloquearFechamento() {
   const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
   
@@ -705,32 +704,43 @@ async function concluirEBloquearFechamento() {
 
   // Baixa o relatório para o celular do vendedor
   let clientesAtendidos = [];
-  bancoDadosRota.forEach(bloco => {
-    bloco.clientes.forEach(c => {
-      if (c.status === 'vendido' && c.venda) {
-        clientesAtendidos.push({
-          clienteNome: c.nome,
-          cidade: bloco.cidade,
-          formaPagamento: c.venda.pagamento,
-          valorTotal: c.venda.total,
-          observacao: c.venda.obs,
-          qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
-          qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
-          qtd_uva: c.venda.itens['UVA']?.qtd || 0,
-          troca_330ml: c.venda.itens['330ML']?.troca || 0,
-          troca_900ml: c.venda.itens['900ML']?.troca || 0,
-          troca_uva: c.venda.itens['UVA']?.troca || 0
-        });
-      }
+  if (typeof bancoDadosRota !== 'undefined') {
+    bancoDadosRota.forEach(bloco => {
+      bloco.clientes.forEach(c => {
+        if (c.status === 'vendido' && c.venda) {
+          clientesAtendidos.push({
+            clienteNome: c.nome,
+            cidade: bloco.cidade,
+            formaPagamento: c.venda.pagamento,
+            valorTotal: c.venda.total,
+            observacao: c.venda.obs,
+            qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
+            qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
+            qtd_uva: c.venda.itens['UVA']?.qtd || 0,
+            troca_330ml: c.venda.itens['330ML']?.troca || 0,
+            troca_900ml: c.venda.itens['900ML']?.troca || 0,
+            troca_uva: c.venda.itens['UVA']?.troca || 0
+          });
+        }
+      });
     });
-  });
+  }
+
+  // Garante que listaDespesas existe antes de passar para o PDF para não quebrar o código
+  const despesasFinal = (typeof listaDespesas !== 'undefined') ? listaDespesas : [];
 
   // 2. Dispara a geração do PDF enviando os dados completos
-  baixarRelatorioFechamento({
-    vendedor: vendedorNome,
-    clientes: clientesAtendidos,
-    despesas: listaDespesas
-  });
+  try {
+    if (typeof baixarRelatorioFechamento === 'function') {
+      baixarRelatorioFechamento({
+        vendedor: vendedorNome,
+        clientes: clientesAtendidos,
+        despesas: despesasFinal
+      });
+    }
+  } catch (errPdf) {
+    console.error("Erro ao gerar o PDF:", errPdf);
+  }
 
   alert("Fechamento enviado com sucesso para o escritório!");
 
@@ -738,6 +748,7 @@ async function concluirEBloquearFechamento() {
   localStorage.clear();
   window.location.reload();
 }
+    
     // --- LÓGICA DE ESTOQUE INICIAL ---
 
 // Chame esta função NO LUGAR da função que antes liberava a tela da rota direto.
