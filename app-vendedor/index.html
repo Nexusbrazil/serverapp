@@ -58,6 +58,84 @@
 
     <div id="cidades-container" class="space-y-3"></div>
   </main>
+  
+  <!-- MODAL ESTOQUE INICIAL (BOM DIA) -->
+<div id="modalEstoqueInicial" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
+    <h2 class="text-xl font-bold text-slate-800 mb-2">Conferência de Estoque</h2>
+    <p class="text-xs text-slate-500 mb-4">Informe o que sobrou de ontem (No Carro) e o que está pegando agora no barracão (Nova Carga).</p>
+    
+    <div class="space-y-3">
+      <!-- 330ml -->
+      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+        <span class="font-bold text-sm w-1/3">330ml</span>
+        <input type="number" id="retorno_330ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        <input type="number" id="carga_330ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+      </div>
+      <!-- 900ml -->
+      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+        <span class="font-bold text-sm w-1/3">900ml</span>
+        <input type="number" id="retorno_900ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        <input type="number" id="carga_900ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+      </div>
+      <!-- Uva -->
+      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+        <span class="font-bold text-sm w-1/3">Uva</span>
+        <input type="number" id="retorno_uva" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        <input type="number" id="carga_uva" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+      </div>
+      <!-- Água SG -->
+      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+        <span class="font-bold text-sm w-1/3">Água S/G</span>
+        <input type="number" id="retorno_agua" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        <input type="number" id="carga_agua" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+      </div>
+      <!-- Água CG -->
+      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+        <span class="font-bold text-sm w-1/3">Água C/G</span>
+        <input type="number" id="retorno_agua_gas" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        <input type="number" id="carga_agua_gas" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+      </div>
+    </div>
+
+    <button onclick="salvarEstoqueInicial()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded text-sm transition">
+      Confirmar Estoque e Iniciar Rota
+    </button>
+  </div>
+</div>
+
+  <!-- SEÇÃO DE DESPESAS DO DIA -->
+<div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+  <button onclick="toggleDespesas()" class="w-full flex justify-between items-center p-4 font-bold text-slate-700 bg-slate-100 rounded-t-lg">
+    <span>💸 Lançar Despesas do Dia</span>
+    <span id="icone-despesa">▼</span>
+  </button>
+  
+  <div id="conteudo-despesas" class="hidden p-4 space-y-3">
+    <div class="flex gap-3">
+      <div class="w-1/2">
+        <label class="block text-xs font-bold text-slate-600 mb-1">Combustível (R$)</label>
+        <input type="number" id="despesa_combustivel" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="w-1/2">
+        <label class="block text-xs font-bold text-slate-600 mb-1">Almoço (R$)</label>
+        <input type="number" id="despesa_almoco" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+      </div>
+    </div>
+    
+    <div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Outras Despesas (R$)</label>
+      <input type="number" id="despesa_outras_valor" class="w-full p-2 border rounded mb-2" step="0.01" min="0" placeholder="0.00">
+      
+      <label class="block text-xs font-bold text-slate-600 mb-1">Observação (Obrigatório se houver valor)</label>
+      <input type="text" id="despesa_outras_obs" class="w-full p-2 border rounded" placeholder="Ex: Pedágio, óleo, conserto...">
+    </div>
+
+    <button onclick="salvarDespesas()" class="w-full mt-2 bg-slate-800 text-white font-bold py-2 rounded text-sm">
+      Salvar Despesas
+    </button>
+  </div>
+</div>
 
   <!-- BOTÃO FIXO DE FECHAMENTO -->
   <div id="box-fechamento" class="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-300 shadow-lg max-w-md mx-auto hidden z-20">
@@ -65,6 +143,7 @@
       🔒 CONCLUIR FECHAMENTO DO DIA
     </button>
   </div>
+  
 
   <!-- MODAL DE VENDA -->
   <div id="modal-venda" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center hidden">
@@ -128,6 +207,16 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
 async function salvarClienteAoVivo(dadosCliente) {
   try {
+    // Trata a combinação de NOTA e BOLETO para o Painel do Escritório
+    let docSolicitado = null;
+    if (dadosCliente.precisaNota && dadosCliente.precisaBoleto) {
+      docSolicitado = 'NOTA E BOLETO';
+    } else if (dadosCliente.precisaNota) {
+      docSolicitado = 'NOTA';
+    } else if (dadosCliente.precisaBoleto) {
+      docSolicitado = 'BOLETO';
+    }
+    
     const payload = {
       vendedor_nome: dadosCliente.vendedor,
       cliente_id: dadosCliente.clienteId,
@@ -139,19 +228,19 @@ async function salvarClienteAoVivo(dadosCliente) {
       qtd_uva: Number(dadosCliente.qtd_uva || 0),
       qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
       qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
-      qtd_agua_15l: Number(dadosCliente.qtd_agua_15l || 0),
       troca_330ml: Number(dadosCliente.troca_330ml || 0),
       troca_900ml: Number(dadosCliente.troca_900ml || 0),
       troca_uva: Number(dadosCliente.troca_uva || 0),
       forma_pagamento: dadosCliente.formaPagamento,
       valor_total: Number(dadosCliente.valorTotal || 0),
       observacao: dadosCliente.observacao || '',
+      solicitacao_documento: docSolicitado,
       status: dadosCliente.statusAtendimento || 'CONCLUIDO'
     };
 
     const { error } = await supabaseClient
       .from('fechamentos')
-      .upsert(payload);
+      .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
 
     if (error) throw error;
     console.log('Cliente enviado ao vivo para o Supabase!');
@@ -165,7 +254,6 @@ async function salvarClienteAoVivo(dadosCliente) {
   { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
   { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
   { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
-  { id: 'AGUA_15L', nome: 'Fardo Água Sem Gás 1,5L (c/ 6)', precoPadrao: 13.00 }
 ];
 
     let bancoDadosRota = [];
@@ -241,10 +329,9 @@ async function salvarClienteAoVivo(dadosCliente) {
         document.getElementById('header-rota').innerText = rotaSel;
 
         document.getElementById('step-config').classList.add('hidden');
-        document.getElementById('step-rota').classList.remove('hidden');
-        document.getElementById('box-fechamento').classList.remove('hidden');
 
-        renderizarCidades();
+        abrirModalEstoque();
+        
       } catch (e) {
         alert("Erro ao buscar rota do servidor: " + e.message);
       }
@@ -418,12 +505,13 @@ async function salvarClienteAoVivo(dadosCliente) {
     valorTotal: teveVenda ? clienteAtual.venda.total : 0,
     formaPagamento: teveVenda ? clienteAtual.venda.pagamento : 'N/A',
     observacao: document.getElementById('modal-obs').value,
+    precisaNota: teveVenda ? document.getElementById('chk-nota').checked : false,
+    precisaBoleto: teveVenda ? document.getElementById('chk-boleto').checked : false,
     qtd_330ml: teveVenda ? (itensVendaTemp['330ML']?.qtd || 0) : 0,
     qtd_900ml: teveVenda ? (itensVendaTemp['900ML']?.qtd || 0) : 0,
     qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
     qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
     qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
-    qtd_agua_15l: teveVenda ? (itensVendaTemp['AGUA_15L']?.qtd || 0) : 0,
     troca_330ml: teveVenda ? (itensVendaTemp['330ML']?.troca || 0) : 0,
     troca_900ml: teveVenda ? (itensVendaTemp['900ML']?.troca || 0) : 0,
     troca_uva: teveVenda ? (itensVendaTemp['UVA']?.troca || 0) : 0
@@ -438,79 +526,136 @@ async function salvarClienteAoVivo(dadosCliente) {
       document.getElementById('step-rota').classList.add('hidden');
       document.getElementById('box-fechamento').classList.add('hidden');
     }
-    // Função para salvar e atualizar cada cliente ao vivo no Supabase
-async function salvarClienteAoVivo(dadosCliente) {
-  try {
-    const payload = {
-      vendedor_nome: dadosCliente.vendedor,
-      cliente_id: dadosCliente.clienteId,
-      cliente_nome: dadosCliente.clienteNome,
-      cidade: dadosCliente.cidade,
-      data_atendimento: new Date().toISOString(),
-      qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
-      qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
-      qtd_uva: Number(dadosCliente.qtd_uva || 0),
-      qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
-      qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
-      qtd_agua_15l: Number(dadosCliente.qtd_agua_15l || 0),
-      forma_pagamento: dadosCliente.formaPagamento,
-      valor_total: Number(dadosCliente.valorTotal || 0),
-      observacao: dadosCliente.observacao || '',
-      status: 'CONCLUIDO'
-    };
-
-    // 'upsert' faz o envio em tempo real e permite reedição do mesmo cliente
-    const { error } = await supabaseClient
-      .from('fechamentos')
-      .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
-
-    if (error) throw error;
-    console.log('Cliente sincronizado ao vivo!');
-  } catch (err) {
-    console.error('Erro ao enviar para o Supabase:', err);
-  }
-}
+    
+    
     // Função para gerar e baixar o relatório HTML
-function baixarRelatorioFechamento(dados) {
+    function baixarRelatorioFechamento(dados) {
   const dataHoje = new Date().toLocaleDateString('pt-BR');
-  
+
+  // 1. Monta as linhas da tabela de clientes atendidos
+  const clientesHTML = (dados.clientes && dados.clientes.length > 0)
+    ? dados.clientes.map(c => `
+      <tr>
+        <td><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
+        <td>
+          330ml: ${c.qtd_330ml || 0}<br>
+          900ml: ${c.qtd_900ml || 0}<br>
+          Uva: ${c.qtd_uva || 0}
+        </td>
+        <td>
+          330ml: ${c.troca_330ml || 0}<br>
+          900ml: ${c.troca_900ml || 0}<br>
+          Uva: ${c.troca_uva || 0}
+        </td>
+        <td>${c.formaPagamento || c.forma_pagamento || '-'}</td>
+        <td><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
+        <td>${c.observacao || '-'}</td>
+      </tr>
+    `).join('')
+    : '<tr><td colspan="6" style="text-align:center;">Nenhum cliente registrado no fechamento.</td></tr>';
+
+  // 2. Monta as linhas das despesas (se houver)
+  const despesasHTML = (dados.despesas && dados.despesas.length > 0)
+    ? dados.despesas.map(d => `
+      <tr>
+        <td>${d.descricao || d.motivo || '-'}</td>
+        <td>R$ ${Number(d.valor || 0).toFixed(2)}</td>
+      </tr>
+    `).join('')
+    : '<tr><td colspan="2" style="text-align:center;">Nenhuma despesa lançada.</td></tr>';
+
+  // 3. Calcula o total geral de vendas
+  const totalVendas = (dados.clientes || []).reduce((acc, c) => acc + Number(c.valorTotal || c.valor_total || 0), 0);
+  const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
+  const valorLiquido = totalVendas - totalDespesas;
+
+  // 4. Conteúdo formatado para Impressão / Salvar em PDF
   const conteudo = `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <title>Relatório de Fechamento - ${dataHoje}</title>
+      <title>Comprovante de Fechamento - ${dados.vendedor} - ${dataHoje}</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333; }
-        h2 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 5px; }
-        .box { background: #f3f4f6; padding: 12px; border-radius: 6px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-        th { background: #e5e7eb; }
+        body { font-family: Arial, sans-serif; padding: 20px; color: #111; font-size: 13px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+        .header h2 { margin: 0; text-transform: uppercase; font-size: 18px; }
+        .box-info { background: #f8f9fa; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        h3 { border-bottom: 1px solid #000; padding-bottom: 3px; margin-top: 20px; font-size: 14px; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #999; padding: 6px; text-align: left; vertical-align: top; }
+        th { background: #eee; font-size: 12px; }
+        .resumo { margin-top: 20px; border: 2px solid #000; padding: 10px; background: #fff; }
+        .resumo p { margin: 4px 0; font-size: 14px; }
+        @media print {
+          body { padding: 0; }
+          .no-print { display: none; }
+        }
       </style>
     </head>
     <body>
-      <h2>Fechamento de Rota - Sunap</h2>
-      <div class="box">
-        <p><strong>Vendedor:</strong> ${dados.vendedor}</p>
-        <p><strong>Data:</strong> ${dataHoje}</p>
+      <div class="header">
+        <h2>Comprovante de Fechamento de Rota</h2>
+        <p style="margin: 3px 0;">Distribuição de Sucos</p>
       </div>
-      <p>Relatório de fechamento finalizado com sucesso e enviado ao escritório.</p>
+
+      <div class="box-info">
+        <span><strong>Vendedor:</strong> ${dados.vendedor || 'Não informado'}</span>
+        <span><strong>Data do Fechamento:</strong> ${dataHoje}</span>
+      </div>
+
+      <h3>1. Clientes Atendidos e Vendas</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente / Cidade</th>
+            <th>Vendas (Qtd)</th>
+            <th>Trocas (Qtd)</th>
+            <th>Pagamento</th>
+            <th>Valor Total</th>
+            <th>Observações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clientesHTML}
+        </tbody>
+      </table>
+
+      <h3>2. Despesas da Rota</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Descrição / Motivo</th>
+            <th>Valor (R$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${despesasHTML}
+        </tbody>
+      </table>
+
+      <div class="resumo">
+        <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+        <p><strong>Total de Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
+        <p style="font-size: 16px; margin-top: 8px;"><strong>Valor Líquido a Prestar Contas:</strong> R$ ${valorLiquido.toFixed(2)}</p>
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+      <\/script>
     </body>
     </html>
   `;
 
-  const blob = new Blob([conteudo], { type: 'text/html;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `Fechamento_${dados.vendedor}_${dataHoje.replace(/\//g, '-')}.html`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Abre uma janela para visualização e aciona a caixa de diálogo "Salvar como PDF / Imprimir"
+  const janela = window.open('', '_blank');
+  janela.document.write(conteudo);
+  janela.document.close();
 }
-
+    
+    
 // Lógica de finalizar e resetar o aplicativo
 async function concluirEBloquearFechamento() {
   const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
@@ -519,13 +664,135 @@ async function concluirEBloquearFechamento() {
   if (!confirmou) return;
 
   // Baixa o relatório para o celular do vendedor
-  baixarRelatorioFechamento({ vendedor: vendedorNome });
+  let clientesAtendidos = [];
+  bancoDadosRota.forEach(bloco => {
+    bloco.clientes.forEach(c => {
+      if (c.status === 'vendido' && c.venda) {
+        clientesAtendidos.push({
+          clienteNome: c.nome,
+          cidade: bloco.cidade,
+          formaPagamento: c.venda.pagamento,
+          valorTotal: c.venda.total,
+          observacao: c.venda.obs,
+          qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
+          qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
+          qtd_uva: c.venda.itens['UVA']?.qtd || 0,
+          troca_330ml: c.venda.itens['330ML']?.troca || 0,
+          troca_900ml: c.venda.itens['900ML']?.troca || 0,
+          troca_uva: c.venda.itens['UVA']?.troca || 0
+        });
+      }
+    });
+  });
+
+  // 2. Dispara a geração do PDF enviando os dados completos
+  baixarRelatorioFechamento({
+    vendedor: vendedorNome,
+    clientes: clientesAtendidos,
+    despesas: listaDespesas
+  });
 
   alert("Fechamento enviado com sucesso para o escritório!");
 
   // Limpa o armazenamento local do navegador e recarrega a página zerada
   localStorage.clear();
   window.location.reload();
+}
+    // --- LÓGICA DE ESTOQUE INICIAL ---
+
+// Chame esta função NO LUGAR da função que antes liberava a tela da rota direto.
+function abrirModalEstoque() {
+  document.getElementById('modalEstoqueInicial').classList.remove('hidden');
+}
+
+async function salvarEstoqueInicial() {
+  const vendedorAtual = document.getElementById('header-vendedor').innerText;
+  // Pega os valores, se estiver vazio vira 0
+  const dadosEstoque = {
+    vendedor_nome: vendedorAtual, // Certifique-se que esta variável existe no seu escopo global
+    data_fechamento: new Date().toISOString().split('T')[0], // Data de hoje formato YYYY-MM-DD
+    retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
+    carga_330ml: Number(document.getElementById('carga_330ml').value) || 0,
+    retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
+    carga_900ml: Number(document.getElementById('carga_900ml').value) || 0,
+    retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
+    carga_uva: Number(document.getElementById('carga_uva').value) || 0,
+    retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
+    carga_agua: Number(document.getElementById('carga_agua').value) || 0,
+    retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas').value) || 0,
+    carga_agua_gas: Number(document.getElementById('carga_agua_gas').value) || 0,
+  };
+
+  try {
+    // Insere ou atualiza o fechamento do dia para este vendedor
+    const { data, error } = await supabaseClient
+      .from('fechamentos')
+      .insert([dadosEstoque])
+
+    if (error) throw error;
+    
+    alert("Estoque inicial gravado com sucesso! Boa rota.");
+    document.getElementById('modalEstoqueInicial').classList.add('hidden');
+    
+    document.getElementById('step-rota').classList.remove('hidden');
+    document.getElementById('box-fechamento').classList.remove('hidden');
+    
+    renderizarCidades();
+    
+  } catch (err) {
+    console.error("Erro ao salvar estoque:", err);
+    alert("Erro ao gravar estoque. Tente novamente.");
+  }
+}
+
+// --- LÓGICA DE DESPESAS ---
+
+function toggleDespesas() {
+  const cont = document.getElementById('conteudo-despesas');
+  const icone = document.getElementById('icone-despesa');
+  if (cont.classList.contains('hidden')) {
+    cont.classList.remove('hidden');
+    icone.innerText = '▲';
+  } else {
+    cont.classList.add('hidden');
+    icone.innerText = '▼';
+  }
+}
+
+async function salvarDespesas() {
+  const vendedorAtual = document.getElementById('header-vendedor').innerText;
+  const combustivel = parseFloat(document.getElementById('despesa_combustivel').value) || 0;
+  const almoco = parseFloat(document.getElementById('despesa_almoco').value) || 0;
+  const outras = parseFloat(document.getElementById('despesa_outras_valor').value) || 0;
+  const obs = document.getElementById('despesa_outras_obs').value;
+
+  if (outras > 0 && obs.trim() === "") {
+    alert("Por favor, descreva do que se trata a despesa em 'Outras'.");
+    return;
+  }
+
+  const hoje = new Date().toISOString().split('T')[0];
+
+  try {
+    const { error } = await supabaseClient
+      .from('fechamentos')
+      .update({
+        despesa_combustivel: combustivel,
+        despesa_almoco: almoco,
+        despesa_outras_valor: outras,
+        despesa_outras_obs: obs
+      })
+      .eq('vendedor_nome', vendedorAtual)
+      .eq('data_fechamento', hoje);
+
+    if (error) throw error;
+    
+    alert("Despesas salvas com sucesso!");
+    toggleDespesas(); // Fecha a sanfona
+  } catch (err) {
+    console.error("Erro ao salvar despesas:", err);
+    alert("Erro ao salvar as despesas. Verifique a internet.");
+  }
 }
   </script>
 </body>
