@@ -569,10 +569,32 @@ const CONVERSAO_CAIXAS = {
     
     
     // Função para gerar e baixar o relatório HTML
-    function baixarRelatorioFechamento(dados) {
+    // Função para gerar e baixar o relatório HTML
+function baixarRelatorioFechamento(dados) {
   const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-  // 1. Monta as linhas da tabela de clientes atendidos
+  // 1. Separa totais por forma de pagamento (Dinheiro vs PIX/Outros)
+  let totalVendas = 0;
+  let totalDinheiro = 0;
+  let totalPix = 0;
+
+  (dados.clientes || []).forEach(c => {
+    const valor = Number(c.valorTotal || c.valor_total || 0);
+    totalVendas += valor;
+
+    const pgto = (c.formaPagamento || c.forma_pagamento || '').toUpperCase();
+    if (pgto.includes('DINHEIRO')) {
+      totalDinheiro += valor;
+    } else if (pgto.includes('PIX')) {
+      totalPix += valor;
+    }
+  });
+
+  const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
+  // O valor a prestar contas é APENAS o dinheiro em espécie menos as despesas
+  const valorLiquidoDinheiro = totalDinheiro - totalDespesas;
+
+  // 2. Monta as linhas da tabela de clientes atendidos
   const clientesHTML = (dados.clientes && dados.clientes.length > 0)
     ? dados.clientes.map(c => `
       <tr>
@@ -580,7 +602,9 @@ const CONVERSAO_CAIXAS = {
         <td>
           330ml: ${c.qtd_330ml || 0}<br>
           900ml: ${c.qtd_900ml || 0}<br>
-          Uva: ${c.qtd_uva || 0}
+          Uva: ${c.qtd_uva || 0}<br>
+          Água s/gás: ${c.qtd_agua_sg || 0}<br>
+          Água c/gás: ${c.qtd_agua_cg || 0}
         </td>
         <td>
           330ml: ${c.troca_330ml || 0}<br>
@@ -594,7 +618,7 @@ const CONVERSAO_CAIXAS = {
     `).join('')
     : '<tr><td colspan="6" style="text-align:center;">Nenhum cliente registrado no fechamento.</td></tr>';
 
-  // 2. Monta as linhas das despesas (se houver)
+  // 3. Monta as linhas das despesas (se houver)
   const despesasHTML = (dados.despesas && dados.despesas.length > 0)
     ? dados.despesas.map(d => `
       <tr>
@@ -603,11 +627,6 @@ const CONVERSAO_CAIXAS = {
       </tr>
     `).join('')
     : '<tr><td colspan="2" style="text-align:center;">Nenhuma despesa lançada.</td></tr>';
-
-  // 3. Calcula o total geral de vendas
-  const totalVendas = (dados.clientes || []).reduce((acc, c) => acc + Number(c.valorTotal || c.valor_total || 0), 0);
-  const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
-  const valorLiquido = totalVendas - totalDespesas;
 
   // 4. Conteúdo formatado para Impressão / Salvar em PDF
   const conteudo = `
@@ -676,8 +695,11 @@ const CONVERSAO_CAIXAS = {
 
       <div class="resumo">
         <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+        <p style="color: #4b5563; margin-left: 10px;">• Total em PIX: R$ ${totalPix.toFixed(2)}</p>
+        <p style="color: #166534; margin-left: 10px;">• Total em Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
         <p><strong>Total de Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
-        <p style="font-size: 16px; margin-top: 8px;"><strong>Valor Líquido a Prestar Contas:</strong> R$ ${valorLiquido.toFixed(2)}</p>
+        <hr style="border: 0; border-top: 1px solid #ccc; margin: 8px 0;">
+        <p style="font-size: 15px; color: #000;"><strong>Valor Líquido a Prestar Contas (Dinheiro em Mão):</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
       </div>
 
       <script>
@@ -694,7 +716,7 @@ const CONVERSAO_CAIXAS = {
   janela.document.write(conteudo);
   janela.document.close();
 }
-
+ 
     // Lógica de finalizar e resetar o aplicativo
 async function concluirEBloquearFechamento() {
   const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
@@ -717,6 +739,8 @@ async function concluirEBloquearFechamento() {
             qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
             qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
             qtd_uva: c.venda.itens['UVA']?.qtd || 0,
+            qtd_agua_sg: c.venda.itens['FARDO_SG']?.qtd || 0,
+            qtd_agua_cg: c.venda.itens['FARDO_CG']?.qtd || 0,
             troca_330ml: c.venda.itens['330ML']?.troca || 0,
             troca_900ml: c.venda.itens['900ML']?.troca || 0,
             troca_uva: c.venda.itens['UVA']?.troca || 0
