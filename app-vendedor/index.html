@@ -418,6 +418,13 @@ const CONVERSAO_CAIXAS = {
 
       document.getElementById('modal-cliente-nome').innerText = clienteAtual.nome;
 
+      // Reseta os checkboxes de boleto e nota para o novo cliente
+const chkBoleto = document.getElementById('chk-boleto');
+const chkNota = document.getElementById('chk-nota'); 
+
+if (chkBoleto) chkBoleto.checked = false;
+if (chkNota) chkNota.checked = false;
+
       itensVendaTemp = {};
       PRODUTOS_CATALOGO.forEach(p => {
         let precoAplicado = p.precoPadrao;
