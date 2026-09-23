@@ -569,7 +569,7 @@ const CONVERSAO_CAIXAS = {
     }
     
     // Função para gerar e baixar o relatório HTML em pdf
-function baixarRelatorioFechamento(dados) {
+    async function baixarRelatorioFechamento(dados) {
   try {
     const dataHoje = new Date().toLocaleDateString('pt-BR');
 
@@ -627,13 +627,12 @@ function baixarRelatorioFechamento(dados) {
       `).join('')
       : '<tr><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
 
-    // 4. Monta o container dinâmico
+    // 4. Cria elemento container em memória
     const elementoContainer = document.createElement('div');
     elementoContainer.style.padding = '15px';
     elementoContainer.style.fontFamily = 'Arial, sans-serif';
     elementoContainer.style.color = '#111';
     elementoContainer.style.fontSize = '12px';
-    elementoContainer.style.background = '#fff';
 
     elementoContainer.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
@@ -688,36 +687,28 @@ function baixarRelatorioFechamento(dados) {
 
     const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
     const dataSanitizada = dataHoje.replace(/\//g, '-');
-    const nomeBase = `fechamento_${nomeVendedorSanitizado}_${dataSanitizada}`;
+    const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataSanitizada}.pdf`;
 
-    // Tenta gerar PDF se a biblioteca html2pdf estiver disponível
+    const opcoes = {
+      margin:       0.3,
+      filename:     nomeArquivo,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, logging: false },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    // O AWAIT GARANTE QUE O CÓDIGO ESPERE O PDF SER GERADO E BAIXADO
     if (typeof html2pdf !== 'undefined') {
-      const opcoes = {
-        margin:       0.3,
-        filename:     `${nomeBase}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opcoes).from(elementoContainer).save();
+      await html2pdf().set(opcoes).from(elementoContainer).save();
     } else {
-      // Fallback: faz o download direto do arquivo HTML caso o html2pdf não tenha carregado
-      const blob = new Blob([elementoContainer.innerHTML], { type: 'text/html;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${nomeBase}.html`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      console.error('Biblioteca html2pdf não encontrada no documento.');
     }
   } catch (err) {
     console.error('Erro ao gerar relatório de fechamento:', err);
   }
 }
- 
+    
+
     // Lógica de finalizar e resetar o aplicativo
 async function concluirEBloquearFechamento() {
   const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
