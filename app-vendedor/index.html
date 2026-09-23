@@ -568,32 +568,28 @@ const CONVERSAO_CAIXAS = {
       document.getElementById('box-fechamento').classList.add('hidden');
     }
     
-    // Função para gerar e baixar o relatório HTML em pdf
-    async function baixarRelatorioFechamento(dados) {
-  try {
+    // ==========================================
+// 1. FUNÇÃO DE GERAR E BAIXAR O PDF DO RELATÓRIO
+// ==========================================
+    
+function baixarRelatorioFechamento(dados) {
+  return new Promise((resolve, reject) => {
     const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-    // 1. Separa totais por forma de pagamento
-    let totalVendas = 0;
-    let totalDinheiro = 0;
-    let totalPix = 0;
-
+    // Cálculos de Totais
+    let totalVendas = 0, totalDinheiro = 0, totalPix = 0;
     (dados.clientes || []).forEach(c => {
       const valor = Number(c.valorTotal || c.valor_total || 0);
       totalVendas += valor;
-
       const pgto = (c.formaPagamento || c.forma_pagamento || '').toUpperCase();
-      if (pgto.includes('DINHEIRO')) {
-        totalDinheiro += valor;
-      } else if (pgto.includes('PIX')) {
-        totalPix += valor;
-      }
+      if (pgto.includes('DINHEIRO')) totalDinheiro += valor;
+      else if (pgto.includes('PIX')) totalPix += valor;
     });
 
     const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
     const valorLiquidoDinheiro = totalDinheiro - totalDespesas;
 
-    // 2. Monta as linhas de clientes
+    // Tabela de Clientes Atendidos
     const clientesHTML = (dados.clientes && dados.clientes.length > 0)
       ? dados.clientes.map(c => `
         <tr>
@@ -617,7 +613,7 @@ const CONVERSAO_CAIXAS = {
       `).join('')
       : '<tr><td colspan="6" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhum cliente registrado.</td></tr>';
 
-    // 3. Monta as linhas de despesas
+    // Tabela de Despesas
     const despesasHTML = (dados.despesas && dados.despesas.length > 0)
       ? dados.despesas.map(d => `
         <tr>
@@ -627,89 +623,71 @@ const CONVERSAO_CAIXAS = {
       `).join('')
       : '<tr><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
 
-    // 4. Cria elemento container em memória
-    const elementoContainer = document.createElement('div');
-    elementoContainer.style.padding = '15px';
-    elementoContainer.style.fontFamily = 'Arial, sans-serif';
-    elementoContainer.style.color = '#111';
-    elementoContainer.style.fontSize = '12px';
-
-    elementoContainer.innerHTML = `
+    // Criação do HTML do Comprovante
+    const el = document.createElement('div');
+    el.style.padding = '15px';
+    el.style.fontFamily = 'Arial, sans-serif';
+    el.style.fontSize = '12px';
+    el.innerHTML = `
       <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
         <h2 style="margin: 0; text-transform: uppercase; font-size: 16px;">Comprovante de Fechamento de Rota</h2>
         <p style="margin: 3px 0; font-size: 12px;">Distribuição de Sucos</p>
       </div>
-
       <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 8px; margin-bottom: 12px; display: flex; justify-content: space-between;">
         <span><strong>Vendedor:</strong> ${dados.vendedor || 'Não informado'}</span>
-        <span><strong>Data do Fechamento:</strong> ${dataHoje}</span>
+        <span><strong>Data:</strong> ${dataHoje}</span>
       </div>
-
-      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px; text-transform: uppercase;">1. Clientes Atendidos e Vendas</h3>
-      <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px;">
-        <thead>
-          <tr style="background: #eee;">
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Cliente / Cidade</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Vendas (Qtd)</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Trocas (Qtd)</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Pagamento</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Valor Total</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Observações</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${clientesHTML}
-        </tbody>
+      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">1. Clientes Atendidos e Vendas</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+        <thead><tr style="background: #eee;">
+          <th style="border: 1px solid #999; padding: 5px;">Cliente</th>
+          <th style="border: 1px solid #999; padding: 5px;">Vendas</th>
+          <th style="border: 1px solid #999; padding: 5px;">Trocas</th>
+          <th style="border: 1px solid #999; padding: 5px;">Pgto</th>
+          <th style="border: 1px solid #999; padding: 5px;">Total</th>
+          <th style="border: 1px solid #999; padding: 5px;">Obs</th>
+        </tr></thead>
+        <tbody>${clientesHTML}</tbody>
       </table>
-
-      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px; text-transform: uppercase;">2. Despesas da Rota</h3>
-      <table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px;">
-        <thead>
-          <tr style="background: #eee;">
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Descrição / Motivo</th>
-            <th style="border: 1px solid #999; padding: 5px; text-align: left;">Valor (R$)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${despesasHTML}
-        </tbody>
+      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">2. Despesas da Rota</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+        <thead><tr style="background: #eee;">
+          <th style="border: 1px solid #999; padding: 5px;">Motivo</th>
+          <th style="border: 1px solid #999; padding: 5px;">Valor</th>
+        </tr></thead>
+        <tbody>${despesasHTML}</tbody>
       </table>
-
-      <div style="margin-top: 15px; border: 2px solid #000; padding: 10px; background: #fff;">
-        <p style="margin: 3px 0;"><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
-        <p style="margin: 3px 0 3px 10px; color: #4b5563;">• Total em PIX: R$ ${totalPix.toFixed(2)}</p>
-        <p style="margin: 3px 0 3px 10px; color: #166534;">• Total em Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
-        <p style="margin: 3px 0;"><strong>Total de Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
-        <hr style="border: 0; border-top: 1px solid #ccc; margin: 6px 0;">
-        <p style="margin: 3px 0; font-size: 14px; color: #000;"><strong>Valor Líquido a Prestar Contas (Dinheiro em Mão):</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
+      <div style="margin-top: 15px; border: 2px solid #000; padding: 10px;">
+        <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+        <p>• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
+        <p><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
+        <hr>
+        <p style="font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
       </div>
     `;
 
     const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
-    const dataSanitizada = dataHoje.replace(/\//g, '-');
-    const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataSanitizada}.pdf`;
+    const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataHoje.replace(/\//g, '-')}.pdf`;
 
     const opcoes = {
-      margin:       0.3,
-      filename:     nomeArquivo,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, logging: false },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      margin: 0.3,
+      filename: nomeArquivo,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, logging: false },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
 
-    // O AWAIT GARANTE QUE O CÓDIGO ESPERE O PDF SER GERADO E BAIXADO
-    if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opcoes).from(elementoContainer).save();
-    } else {
-      console.error('Biblioteca html2pdf não encontrada no documento.');
-    }
-  } catch (err) {
-    console.error('Erro ao gerar relatório de fechamento:', err);
-  }
+    // Gera o PDF e só resolve a Promise quando o download for concluído
+    html2pdf().set(opcoes).from(el).save()
+      .then(() => resolve())
+      .catch((err) => reject(err));
+  });
 }
-    
 
-    // Lógica de finalizar e resetar o aplicativo
+
+// ==========================================
+// 2. LÓGICA DE FINALIZAR E RESETAR O APLICATIVO
+// ==========================================
 async function concluirEBloquearFechamento() {
   const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
   
@@ -745,10 +723,11 @@ async function concluirEBloquearFechamento() {
   // Garante que listaDespesas existe antes de passar para o PDF para não quebrar o código
   const despesasFinal = (typeof listaDespesas !== 'undefined') ? listaDespesas : [];
 
-  // 2. Dispara a geração do PDF enviando os dados completos
+  // Tenta gerar e baixar o PDF esperando o término com AWAIT
   try {
     if (typeof baixarRelatorioFechamento === 'function') {
-      baixarRelatorioFechamento({
+      // AGORA ELE REALMENTE ESPERA O PDF SER BAIXADO
+      await baixarRelatorioFechamento({
         vendedor: vendedorNome,
         clientes: clientesAtendidos,
         despesas: despesasFinal
