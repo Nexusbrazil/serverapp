@@ -767,6 +767,7 @@ async function salvarEstoqueInicial() {
   // Pega os valores, se estiver vazio vira 0
   const dadosEstoque = {
     vendedor_nome: vendedorAtual, // Certifique-se que esta variável existe no seu escopo global
+    status: 'CONCLUIDO',
     data_fechamento: new Date().toISOString().split('T')[0], // Data de hoje formato YYYY-MM-DD
     retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
     carga_330ml:cxCarga330ml * (CONVERSAO_CAIXAS['330ML'] || 80),
