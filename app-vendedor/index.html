@@ -10,7 +10,6 @@
   <style> body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; } </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
 </head>
 <body class="bg-gray-100 text-gray-800 pb-24 select-none">
 
@@ -50,7 +49,7 @@
     </div>
   </section>
 
-  <!-- PASSO 2: CIDADES (SANFONAS) E CLIENTES -->
+  <!-- PASSO 2: CIDADES E CLIENTES -->
   <main id="step-rota" class="p-4 max-w-md mx-auto space-y-3 hidden">
     <div class="flex justify-between items-center mb-1">
       <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
@@ -58,84 +57,79 @@
     </div>
     
     <div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-  <button onclick="toggleDespesas()" class="w-full flex justify-between items-center p-4 font-bold text-slate-700 bg-slate-100 rounded-t-lg">
-    <span>💸 Lançar Despesas do Dia</span>
-    <span id="icone-despesa">▼</span>
-  </button>
-  
-  <div id="conteudo-despesas" class="hidden p-4 space-y-3">
-    <div class="flex gap-3">
-      <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-600 mb-1">Combustível (R$)</label>
-        <input type="number" id="despesa_combustivel" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
-      </div>
-      <div class="w-1/2">
-        <label class="block text-xs font-bold text-slate-600 mb-1">Almoço (R$)</label>
-        <input type="number" id="despesa_almoco" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
-      </div>
-    </div>
-    
-    <div>
-      <label class="block text-xs font-bold text-slate-600 mb-1">Outras Despesas (R$)</label>
-      <input type="number" id="despesa_outras_valor" class="w-full p-2 border rounded mb-2" step="0.01" min="0" placeholder="0.00">
+      <button onclick="toggleDespesas()" class="w-full flex justify-between items-center p-4 font-bold text-slate-700 bg-slate-100 rounded-t-lg">
+        <span>💸 Lançar Despesas do Dia</span>
+        <span id="icone-despesa">▼</span>
+      </button>
       
-      <label class="block text-xs font-bold text-slate-600 mb-1">Observação (Obrigatório se houver valor)</label>
-      <input type="text" id="despesa_outras_obs" class="w-full p-2 border rounded" placeholder="Ex: Pedágio, óleo, conserto...">
+      <div id="conteudo-despesas" class="hidden p-4 space-y-3">
+        <div class="flex gap-3">
+          <div class="w-1/2">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Combustível (R$)</label>
+            <input type="number" id="despesa_combustivel" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+          </div>
+          <div class="w-1/2">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Almoço (R$)</label>
+            <input type="number" id="despesa_almoco" class="w-full p-2 border rounded" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Outras Despesas (R$)</label>
+          <input type="number" id="despesa_outras_valor" class="w-full p-2 border rounded mb-2" step="0.01" min="0" placeholder="0.00">
+          <label class="block text-xs font-bold text-slate-600 mb-1">Observação (Obrigatório se houver valor)</label>
+          <input type="text" id="despesa_outras_obs" class="w-full p-2 border rounded" placeholder="Ex: Pedágio, óleo, conserto...">
+        </div>
+        <button onclick="salvarDespesas()" class="w-full mt-2 bg-slate-800 text-white font-bold py-2 rounded text-sm">
+          Salvar Despesas
+        </button>
+      </div>
     </div>
 
-    <button onclick="salvarDespesas()" class="w-full mt-2 bg-slate-800 text-white font-bold py-2 rounded text-sm">
-      Salvar Despesas
+    <!-- BOTAO DE VENDA AVULSA -->
+    <button onclick="abrirModalVendaAvulsa()" class="w-full flex justify-center items-center gap-2 p-3 font-bold text-white bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg shadow-md transition-colors">
+      <span>➕</span> Adicionar Venda Avulsa
     </button>
-  </div>
-</div>
 
     <div id="cidades-container" class="space-y-3"></div>
   </main>
   
-  <!-- MODAL ESTOQUE INICIAL (BOM DIA) -->
-<div id="modalEstoqueInicial" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
-    <h2 class="text-xl font-bold text-slate-800 mb-2">Conferência de Estoque</h2>
-    <p class="text-xs text-slate-500 mb-4">Informe o que sobrou de ontem (No Carro) e o que está pegando agora no barracão (Nova Carga).</p>
-    
-    <div class="space-y-3">
-      <!-- 330ml -->
-      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
-        <span class="font-bold text-sm w-1/3">330ml</span>
-        <input type="number" id="retorno_330ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-        <input type="number" id="carga_330ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+  <!-- MODAL ESTOQUE INICIAL -->
+  <div id="modalEstoqueInicial" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
+      <h2 class="text-xl font-bold text-slate-800 mb-2">Conferência de Estoque</h2>
+      <p class="text-xs text-slate-500 mb-4">Informe o que sobrou de ontem (No Carro) e o que está pegando agora no barracão (Nova Carga).</p>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">330ml</span>
+          <input type="number" id="retorno_330ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_330ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">900ml</span>
+          <input type="number" id="retorno_900ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_900ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">Uva</span>
+          <input type="number" id="retorno_uva" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_uva" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">Água S/G</span>
+          <input type="number" id="retorno_agua" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_agua" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">Água C/G</span>
+          <input type="number" id="retorno_agua_gas" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_agua_gas" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
       </div>
-      <!-- 900ml -->
-      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
-        <span class="font-bold text-sm w-1/3">900ml</span>
-        <input type="number" id="retorno_900ml" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-        <input type="number" id="carga_900ml" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-      </div>
-      <!-- Uva -->
-      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
-        <span class="font-bold text-sm w-1/3">Uva</span>
-        <input type="number" id="retorno_uva" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-        <input type="number" id="carga_uva" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-      </div>
-      <!-- Água SG -->
-      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
-        <span class="font-bold text-sm w-1/3">Água S/G</span>
-        <input type="number" id="retorno_agua" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-        <input type="number" id="carga_agua" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-      </div>
-      <!-- Água CG -->
-      <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
-        <span class="font-bold text-sm w-1/3">Água C/G</span>
-        <input type="number" id="retorno_agua_gas" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-        <input type="number" id="carga_agua_gas" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
-      </div>
+      <button onclick="salvarEstoqueInicial()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded text-sm transition">
+        Confirmar Estoque e Iniciar Rota
+      </button>
     </div>
-
-    <button onclick="salvarEstoqueInicial()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded text-sm transition">
-      Confirmar Estoque e Iniciar Rota
-    </button>
   </div>
-</div>
 
   <!-- BOTÃO FIXO DE FECHAMENTO -->
   <div id="box-fechamento" class="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-300 shadow-lg max-w-md mx-auto hidden z-20">
@@ -144,8 +138,30 @@
     </button>
   </div>
   
+  <!-- MODAL INSERIR VENDA AVULSA -->
+  <div id="modal-avulsa" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl mx-4">
+      <h3 class="font-bold text-lg text-gray-900 border-b pb-2 mb-3">Nova Venda Avulsa</h3>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Nome do Cliente / Estabelecimento</label>
+          <input type="text" id="avulsa-nome" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm" placeholder="Ex: Mercado Central">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Cidade</label>
+          <input type="text" id="avulsa-cidade" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm" placeholder="Ex: Apucarana">
+        </div>
+      </div>
 
-  <!-- MODAL DE VENDA -->
+      <div class="grid grid-cols-2 gap-3 pt-5">
+        <button onclick="fecharModalAvulsa()" class="bg-gray-200 text-gray-700 font-bold p-3 rounded-xl text-sm">Cancelar</button>
+        <button onclick="criarVendaAvulsa()" class="bg-green-600 text-white font-bold p-3 rounded-xl text-sm shadow-md">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VENDA PRINCIPAL -->
   <div id="modal-venda" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center hidden">
     <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
       
@@ -199,84 +215,73 @@
   </div>
 
   <script>
-    // O Netlify injeta essas variáveis automaticamente se você já cadastrou lá no painel
-const SUPABASE_URL = "https://podnijlrofkhcbbqliem.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
+    const SUPABASE_URL = "https://podnijlrofkhcbbqliem.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
-async function salvarClienteAoVivo(dadosCliente) {
-  try {
-    // Trata a combinação de NOTA e BOLETO para o Painel do Escritório
-    let docSolicitado = null;
-    if (dadosCliente.precisaNota && dadosCliente.precisaBoleto) {
-      docSolicitado = 'NOTA E BOLETO';
-    } else if (dadosCliente.precisaNota) {
-      docSolicitado = 'NOTA';
-    } else if (dadosCliente.precisaBoleto) {
-      docSolicitado = 'BOLETO';
+
+    async function salvarClienteAoVivo(dadosCliente) {
+      try {
+        let docSolicitado = null;
+        if (dadosCliente.precisaNota && dadosCliente.precisaBoleto) {
+          docSolicitado = 'NOTA E BOLETO';
+        } else if (dadosCliente.precisaNota) {
+          docSolicitado = 'NOTA';
+        } else if (dadosCliente.precisaBoleto) {
+          docSolicitado = 'BOLETO';
+        }
+        
+        const payload = {
+          vendedor_nome: dadosCliente.vendedor,
+          cliente_id: dadosCliente.clienteId,
+          cliente_nome: dadosCliente.clienteNome,
+          cidade: dadosCliente.cidade,
+          data_atendimento: new Date().toISOString(),
+          qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
+          qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
+          qtd_uva: Number(dadosCliente.qtd_uva || 0),
+          qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
+          qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
+          troca_330ml: Number(dadosCliente.troca_330ml || 0),
+          troca_900ml: Number(dadosCliente.troca_900ml || 0),
+          troca_uva: Number(dadosCliente.troca_uva || 0),
+          forma_pagamento: dadosCliente.formaPagamento,
+          valor_total: Number(dadosCliente.valorTotal || 0),
+          observacao: dadosCliente.observacao || '',
+          solicitacao_documento: docSolicitado,
+          status: dadosCliente.statusAtendimento || 'CONCLUIDO'
+        };
+
+        const { error } = await supabaseClient
+          .from('fechamentos')
+          .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
+
+        if (error) throw error;
+        console.log('Cliente enviado ao vivo para o Supabase!');
+      } catch (err) {
+        console.error('Erro ao enviar para o Supabase:', err);
+      }
     }
-    
-    const payload = {
-      vendedor_nome: dadosCliente.vendedor,
-      cliente_id: dadosCliente.clienteId,
-      cliente_nome: dadosCliente.clienteNome,
-      cidade: dadosCliente.cidade,
-      data_atendimento: new Date().toISOString(),
-      qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
-      qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
-      qtd_uva: Number(dadosCliente.qtd_uva || 0),
-      qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
-      qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
-      troca_330ml: Number(dadosCliente.troca_330ml || 0),
-      troca_900ml: Number(dadosCliente.troca_900ml || 0),
-      troca_uva: Number(dadosCliente.troca_uva || 0),
-      forma_pagamento: dadosCliente.formaPagamento,
-      valor_total: Number(dadosCliente.valorTotal || 0),
-      observacao: dadosCliente.observacao || '',
-      solicitacao_documento: docSolicitado,
-      status: dadosCliente.statusAtendimento || 'CONCLUIDO'
-    };
 
-    const { error } = await supabaseClient
-      .from('fechamentos')
-      .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
-
-    if (error) throw error;
-    console.log('Cliente enviado ao vivo para o Supabase!');
-  } catch (err) {
-    console.error('Erro ao enviar para o Supabase:', err);
-  }
-}
-
-    
     const PRODUTOS_CATALOGO = [
-  { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },  
-  { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },            
-  { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
-  { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
-  { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
-];
+      { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },  
+      { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },            
+      { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
+      { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
+      { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
+    ];
+    
     const PRECOS_ESPECIAIS_VENDEDOR = {
-  "GUSTAVO": {
-    "330ML": 5.30,
-    // "900ML": 11.00,
-    // "UVA": 5.50,
-    // "FARDO_SG": 12.00,
-    // "FARDO_CG": 14.00
-  }
-  // Futuramente, para adicionar outro vendedor, basta copiar a estrutura:
-  // "NOME_DO_VENDEDOR": {
-  //   "330ML": 5.00,
-  //   "900ML": 10.00
-  // }
-};
-    // Fator de conversão de caixas para unidades na Carga Nova
-// Apenas produtos definidos aqui serão digitados em caixas no formulário
-const CONVERSAO_CAIXAS = {
-  '330ML': 80, // 1 caixa = 80 unidades
-  '900ML': 25  // 1 caixa = 25 unidades
-};
+      "GUSTAVO": {
+        "330ML": 5.30,
+      }
+    };
+    
+    const CONVERSAO_CAIXAS = {
+      '330ML': 80, 
+      '900ML': 25  
+    };
 
     let bancoDadosRota = [];
     let clienteAtual = null;
@@ -408,6 +413,52 @@ const CONVERSAO_CAIXAS = {
       renderizarCidades();
     }
 
+    // --- FUNÇÕES DA VENDA AVULSA ---
+    function abrirModalVendaAvulsa() {
+      document.getElementById('avulsa-nome').value = '';
+      document.getElementById('avulsa-cidade').value = '';
+      document.getElementById('modal-avulsa').classList.remove('hidden');
+    }
+
+    function fecharModalAvulsa() {
+      document.getElementById('modal-avulsa').classList.add('hidden');
+    }
+
+    function criarVendaAvulsa() {
+      const nome = document.getElementById('avulsa-nome').value.trim();
+      const cidade = document.getElementById('avulsa-cidade').value.trim().toUpperCase();
+
+      if (!nome || !cidade) {
+        alert("Preencha o nome e a cidade do cliente avulso.");
+        return;
+      }
+
+      const novoId = Date.now(); // Gera um ID temporário único
+      const novoCliente = {
+        id: novoId,
+        nome: nome + " (AVULSO)", // Adiciona o sufixo para controle visual e do backend
+        status: 'pendente'
+      };
+
+      // Verifica se a cidade digitada já existe na tela
+      let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === cidade);
+
+      if (blocoCidade) {
+        blocoCidade.clientes.push(novoCliente);
+      } else {
+        bancoDadosRota.push({
+          cidade: cidade,
+          clientes: [novoCliente]
+        });
+        sanfonasAbertas[bancoDadosRota.length - 1] = true; // Abre a sanfona da nova cidade
+      }
+
+      fecharModalAvulsa();
+      renderizarCidades();
+      abrirModalVenda(novoId); // Abre automaticamente a tela para finalizar a venda
+    }
+    // -------------------------------
+
     function abrirModalVenda(clienteId) {
       const vendedorAtual = (document.getElementById('header-vendedor')?.innerText || '').toUpperCase();
       
@@ -418,34 +469,30 @@ const CONVERSAO_CAIXAS = {
 
       document.getElementById('modal-cliente-nome').innerText = clienteAtual.nome;
 
-      // Reseta os checkboxes de boleto e nota para o novo cliente
-const chkBoleto = document.getElementById('chk-boleto');
-const chkNota = document.getElementById('chk-nota'); 
+      const chkBoleto = document.getElementById('chk-boleto');
+      const chkNota = document.getElementById('chk-nota'); 
 
-if (chkBoleto) chkBoleto.checked = false;
-if (chkNota) chkNota.checked = false;
+      if (chkBoleto) chkBoleto.checked = false;
+      if (chkNota) chkNota.checked = false;
 
       itensVendaTemp = {};
       PRODUTOS_CATALOGO.forEach(p => {
         let precoAplicado = p.precoPadrao;
 
-    // 1. Aplica o Preço Especial do Vendedor (se existir)
-    for (let nomeVend in PRECOS_ESPECIAIS_VENDEDOR) {
-      if (vendedorAtual.includes(nomeVend)) {
-        if (PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id] !== undefined) {
-          precoAplicado = PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id];
+        for (let nomeVend in PRECOS_ESPECIAIS_VENDEDOR) {
+          if (vendedorAtual.includes(nomeVend)) {
+            if (PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id] !== undefined) {
+              precoAplicado = PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id];
+            }
+          }
         }
-      }
-    }
 
-    // 2. (Evolução Futura): Se o cliente específico tiver preço próprio, ele sobrescreve aqui
-    if (clienteAtual.precosEspeciais && clienteAtual.precosEspeciais[p.id] !== undefined) {
-      precoAplicado = clienteAtual.precosEspeciais[p.id];
-    }
+        if (clienteAtual.precosEspeciais && clienteAtual.precosEspeciais[p.id] !== undefined) {
+          precoAplicado = clienteAtual.precosEspeciais[p.id];
+        }
 
-    itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: precoAplicado };
-  });
-
+        itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: precoAplicado };
+      });
 
       if (clienteAtual.venda) {
         document.getElementById('modal-pagamento').value = clienteAtual.venda.pagamento;
@@ -523,12 +570,13 @@ if (chkNota) chkNota.checked = false;
     async function salvarVenda(teveVenda) {
       let cidadeCliente = "";
   
-  for (let bloco of bancoDadosRota) {
-    if (bloco.clientes.some(c => c.id === clienteAtual.id)) {
-      cidadeCliente = bloco.cidade;
-      break;
-    }
-  }
+      for (let bloco of bancoDadosRota) {
+        if (bloco.clientes.some(c => c.id === clienteAtual.id)) {
+          cidadeCliente = bloco.cidade;
+          break;
+        }
+      }
+      
       if (!teveVenda) {
         clienteAtual.status = 'nao_comprou';
         clienteAtual.venda = null;
@@ -543,27 +591,28 @@ if (chkNota) chkNota.checked = false;
           itens: JSON.parse(JSON.stringify(itensVendaTemp))
         };
       }
-      // Disparo em tempo real para o Supabase
-  await salvarClienteAoVivo({
-    vendedor: document.getElementById('header-vendedor').innerText,
-    clienteId: clienteAtual.id,
-    clienteNome: clienteAtual.nome,
-    cidade: cidadeCliente,
-    statusAtendimento: teveVenda ? 'CONCLUIDO' : 'NAO_COMPROU',
-    valorTotal: teveVenda ? clienteAtual.venda.total : 0,
-    formaPagamento: teveVenda ? clienteAtual.venda.pagamento : 'N/A',
-    observacao: document.getElementById('modal-obs').value,
-    precisaNota: teveVenda ? document.getElementById('chk-nota').checked : false,
-    precisaBoleto: teveVenda ? document.getElementById('chk-boleto').checked : false,
-    qtd_330ml: teveVenda ? (itensVendaTemp['330ML']?.qtd || 0) : 0,
-    qtd_900ml: teveVenda ? (itensVendaTemp['900ML']?.qtd || 0) : 0,
-    qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
-    qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
-    qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
-    troca_330ml: teveVenda ? (itensVendaTemp['330ML']?.troca || 0) : 0,
-    troca_900ml: teveVenda ? (itensVendaTemp['900ML']?.troca || 0) : 0,
-    troca_uva: teveVenda ? (itensVendaTemp['UVA']?.troca || 0) : 0
-  });
+
+      await salvarClienteAoVivo({
+        vendedor: document.getElementById('header-vendedor').innerText,
+        clienteId: clienteAtual.id, // O ID avulso (Date.now()) vai para o DB perfeitamente
+        clienteNome: clienteAtual.nome,
+        cidade: cidadeCliente,
+        statusAtendimento: teveVenda ? 'CONCLUIDO' : 'NAO_COMPROU',
+        valorTotal: teveVenda ? clienteAtual.venda.total : 0,
+        formaPagamento: teveVenda ? clienteAtual.venda.pagamento : 'N/A',
+        observacao: document.getElementById('modal-obs').value,
+        precisaNota: teveVenda ? document.getElementById('chk-nota').checked : false,
+        precisaBoleto: teveVenda ? document.getElementById('chk-boleto').checked : false,
+        qtd_330ml: teveVenda ? (itensVendaTemp['330ML']?.qtd || 0) : 0,
+        qtd_900ml: teveVenda ? (itensVendaTemp['900ML']?.qtd || 0) : 0,
+        qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
+        qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
+        qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
+        troca_330ml: teveVenda ? (itensVendaTemp['330ML']?.troca || 0) : 0,
+        troca_900ml: teveVenda ? (itensVendaTemp['900ML']?.troca || 0) : 0,
+        troca_uva: teveVenda ? (itensVendaTemp['UVA']?.troca || 0) : 0
+      });
+
       fecharModal();
       renderizarCidades();
     }
@@ -575,282 +624,257 @@ if (chkNota) chkNota.checked = false;
       document.getElementById('box-fechamento').classList.add('hidden');
     }
     
-    // ==========================================
-// 1. FUNÇÃO DE GERAR E BAIXAR O PDF DO RELATÓRIO
-// ==========================================
-    
-function baixarRelatorioFechamento(dados) {
-  return new Promise((resolve, reject) => {
-    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    function baixarRelatorioFechamento(dados) {
+      return new Promise((resolve, reject) => {
+        const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-    // Cálculos de Totais
-    let totalVendas = 0, totalDinheiro = 0, totalPix = 0;
-    (dados.clientes || []).forEach(c => {
-      const valor = Number(c.valorTotal || c.valor_total || 0);
-      totalVendas += valor;
-      const pgto = (c.formaPagamento || c.forma_pagamento || '').toUpperCase();
-      if (pgto.includes('DINHEIRO')) totalDinheiro += valor;
-      else if (pgto.includes('PIX')) totalPix += valor;
-    });
+        let totalVendas = 0, totalDinheiro = 0, totalPix = 0;
+        (dados.clientes || []).forEach(c => {
+          const valor = Number(c.valorTotal || c.valor_total || 0);
+          totalVendas += valor;
+          const pgto = (c.formaPagamento || c.forma_pagamento || '').toUpperCase();
+          if (pgto.includes('DINHEIRO')) totalDinheiro += valor;
+          else if (pgto.includes('PIX')) totalPix += valor;
+        });
 
-    const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
-    const valorLiquidoDinheiro = totalDinheiro - totalDespesas;
+        const totalDespesas = (dados.despesas || []).reduce((acc, d) => acc + Number(d.valor || 0), 0);
+        const valorLiquidoDinheiro = totalDinheiro - totalDespesas;
 
-    // Tabela de Clientes Atendidos
-    const clientesHTML = (dados.clientes && dados.clientes.length > 0)
-      ? dados.clientes.map(c => `
-        <tr>
-          <td style="border: 1px solid #999; padding: 5px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
-          <td style="border: 1px solid #999; padding: 5px;">
-            330ml: ${c.qtd_330ml || 0}<br>
-            900ml: ${c.qtd_900ml || 0}<br>
-            Uva: ${c.qtd_uva || 0}<br>
-            Água s/gás: ${c.qtd_agua_sg || 0}<br>
-            Água c/gás: ${c.qtd_agua_cg || 0}
-          </td>
-          <td style="border: 1px solid #999; padding: 5px;">
-            330ml: ${c.troca_330ml || 0}<br>
-            900ml: ${c.troca_900ml || 0}<br>
-            Uva: ${c.troca_uva || 0}
-          </td>
-          <td style="border: 1px solid #999; padding: 5px;">${c.formaPagamento || c.forma_pagamento || '-'}</td>
-          <td style="border: 1px solid #999; padding: 5px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
-          <td style="border: 1px solid #999; padding: 5px;">${c.observacao || '-'}</td>
-        </tr>
-      `).join('')
-      : '<tr><td colspan="6" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhum cliente registrado.</td></tr>';
+        const clientesHTML = (dados.clientes && dados.clientes.length > 0)
+          ? dados.clientes.map(c => `
+            <tr>
+              <td style="border: 1px solid #999; padding: 5px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
+              <td style="border: 1px solid #999; padding: 5px;">
+                330ml: ${c.qtd_330ml || 0}<br>
+                900ml: ${c.qtd_900ml || 0}<br>
+                Uva: ${c.qtd_uva || 0}<br>
+                Água s/gás: ${c.qtd_agua_sg || 0}<br>
+                Água c/gás: ${c.qtd_agua_cg || 0}
+              </td>
+              <td style="border: 1px solid #999; padding: 5px;">
+                330ml: ${c.troca_330ml || 0}<br>
+                900ml: ${c.troca_900ml || 0}<br>
+                Uva: ${c.troca_uva || 0}
+              </td>
+              <td style="border: 1px solid #999; padding: 5px;">${c.formaPagamento || c.forma_pagamento || '-'}</td>
+              <td style="border: 1px solid #999; padding: 5px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
+              <td style="border: 1px solid #999; padding: 5px;">${c.observacao || '-'}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="6" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhum cliente registrado.</td></tr>';
 
-    // Tabela de Despesas
-    const despesasHTML = (dados.despesas && dados.despesas.length > 0)
-      ? dados.despesas.map(d => `
-        <tr>
-          <td style="border: 1px solid #999; padding: 5px;">${d.descricao || d.motivo || '-'}</td>
-          <td style="border: 1px solid #999; padding: 5px;">R$ ${Number(d.valor || 0).toFixed(2)}</td>
-        </tr>
-      `).join('')
-      : '<tr><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
+        const despesasHTML = (dados.despesas && dados.despesas.length > 0)
+          ? dados.despesas.map(d => `
+            <tr>
+              <td style="border: 1px solid #999; padding: 5px;">${d.descricao || d.motivo || '-'}</td>
+              <td style="border: 1px solid #999; padding: 5px;">R$ ${Number(d.valor || 0).toFixed(2)}</td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
 
-    // Criação do HTML do Comprovante
-    const el = document.createElement('div');
-    el.style.padding = '15px';
-    el.style.fontFamily = 'Arial, sans-serif';
-    el.style.fontSize = '12px';
-    el.innerHTML = `
-      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
-        <h2 style="margin: 0; text-transform: uppercase; font-size: 16px;">Comprovante de Fechamento de Rota</h2>
-        <p style="margin: 3px 0; font-size: 12px;">Distribuição de Sucos</p>
-      </div>
-      <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 8px; margin-bottom: 12px; display: flex; justify-content: space-between;">
-        <span><strong>Vendedor:</strong> ${dados.vendedor || 'Não informado'}</span>
-        <span><strong>Data:</strong> ${dataHoje}</span>
-      </div>
-      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">1. Clientes Atendidos e Vendas</h3>
-      <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-        <thead><tr style="background: #eee;">
-          <th style="border: 1px solid #999; padding: 5px;">Cliente</th>
-          <th style="border: 1px solid #999; padding: 5px;">Vendas</th>
-          <th style="border: 1px solid #999; padding: 5px;">Trocas</th>
-          <th style="border: 1px solid #999; padding: 5px;">Pgto</th>
-          <th style="border: 1px solid #999; padding: 5px;">Total</th>
-          <th style="border: 1px solid #999; padding: 5px;">Obs</th>
-        </tr></thead>
-        <tbody>${clientesHTML}</tbody>
-      </table>
-      <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">2. Despesas da Rota</h3>
-      <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-        <thead><tr style="background: #eee;">
-          <th style="border: 1px solid #999; padding: 5px;">Motivo</th>
-          <th style="border: 1px solid #999; padding: 5px;">Valor</th>
-        </tr></thead>
-        <tbody>${despesasHTML}</tbody>
-      </table>
-      <div style="margin-top: 15px; border: 2px solid #000; padding: 10px;">
-        <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
-        <p>• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
-        <p><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
-        <hr>
-        <p style="font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
-      </div>
-    `;
+        const el = document.createElement('div');
+        el.style.padding = '15px';
+        el.style.fontFamily = 'Arial, sans-serif';
+        el.style.fontSize = '12px';
+        el.innerHTML = `
+          <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
+            <h2 style="margin: 0; text-transform: uppercase; font-size: 16px;">Comprovante de Fechamento de Rota</h2>
+            <p style="margin: 3px 0; font-size: 12px;">Distribuição de Sucos</p>
+          </div>
+          <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 8px; margin-bottom: 12px; display: flex; justify-content: space-between;">
+            <span><strong>Vendedor:</strong> ${dados.vendedor || 'Não informado'}</span>
+            <span><strong>Data:</strong> ${dataHoje}</span>
+          </div>
+          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">1. Clientes Atendidos e Vendas</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead><tr style="background: #eee;">
+              <th style="border: 1px solid #999; padding: 5px;">Cliente</th>
+              <th style="border: 1px solid #999; padding: 5px;">Vendas</th>
+              <th style="border: 1px solid #999; padding: 5px;">Trocas</th>
+              <th style="border: 1px solid #999; padding: 5px;">Pgto</th>
+              <th style="border: 1px solid #999; padding: 5px;">Total</th>
+              <th style="border: 1px solid #999; padding: 5px;">Obs</th>
+            </tr></thead>
+            <tbody>${clientesHTML}</tbody>
+          </table>
+          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">2. Despesas da Rota</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead><tr style="background: #eee;">
+              <th style="border: 1px solid #999; padding: 5px;">Motivo</th>
+              <th style="border: 1px solid #999; padding: 5px;">Valor</th>
+            </tr></thead>
+            <tbody>${despesasHTML}</tbody>
+          </table>
+          <div style="margin-top: 15px; border: 2px solid #000; padding: 10px;">
+            <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+            <p>• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
+            <p><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
+            <hr>
+            <p style="font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
+          </div>
+        `;
 
-    const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
-    const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataHoje.replace(/\//g, '-')}.pdf`;
+        const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
+        const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataHoje.replace(/\//g, '-')}.pdf`;
 
-    const opcoes = {
-      margin: 0.3,
-      filename: nomeArquivo,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, logging: false },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
+        const opcoes = {
+          margin: 0.3,
+          filename: nomeArquivo,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, logging: false },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
 
-    // Gera o PDF e só resolve a Promise quando o download for concluído
-    html2pdf().set(opcoes).from(el).save()
-      .then(() => resolve())
-      .catch((err) => reject(err));
-  });
-}
-
-
-// ==========================================
-// 2. LÓGICA DE FINALIZAR E RESETAR O APLICATIVO
-// ==========================================
-async function concluirEBloquearFechamento() {
-  const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
-  
-  const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O aplicativo será resetado e travado.");
-  if (!confirmou) return;
-
-  // Baixa o relatório para o celular do vendedor
-  let clientesAtendidos = [];
-  if (typeof bancoDadosRota !== 'undefined') {
-    bancoDadosRota.forEach(bloco => {
-      bloco.clientes.forEach(c => {
-        if (c.status === 'vendido' && c.venda) {
-          clientesAtendidos.push({
-            clienteNome: c.nome,
-            cidade: bloco.cidade,
-            formaPagamento: c.venda.pagamento,
-            valorTotal: c.venda.total,
-            observacao: c.venda.obs,
-            qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
-            qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
-            qtd_uva: c.venda.itens['UVA']?.qtd || 0,
-            qtd_agua_sg: c.venda.itens['FARDO_SG']?.qtd || 0,
-            qtd_agua_cg: c.venda.itens['FARDO_CG']?.qtd || 0,
-            troca_330ml: c.venda.itens['330ML']?.troca || 0,
-            troca_900ml: c.venda.itens['900ML']?.troca || 0,
-            troca_uva: c.venda.itens['UVA']?.troca || 0
-          });
-        }
-      });
-    });
-  }
-
-  // Garante que listaDespesas existe antes de passar para o PDF para não quebrar o código
-  const despesasFinal = (typeof listaDespesas !== 'undefined') ? listaDespesas : [];
-
-  // Tenta gerar e baixar o PDF esperando o término com AWAIT
-  try {
-    if (typeof baixarRelatorioFechamento === 'function') {
-      // AGORA ELE REALMENTE ESPERA O PDF SER BAIXADO
-      await baixarRelatorioFechamento({
-        vendedor: vendedorNome,
-        clientes: clientesAtendidos,
-        despesas: despesasFinal
+        html2pdf().set(opcoes).from(el).save()
+          .then(() => resolve())
+          .catch((err) => reject(err));
       });
     }
-  } catch (errPdf) {
-    console.error("Erro ao gerar o PDF:", errPdf);
-  }
 
-  alert("Fechamento enviado com sucesso para o escritório!");
+    async function concluirEBloquearFechamento() {
+      const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
+      
+      const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O aplicativo será resetado e travado.");
+      if (!confirmou) return;
 
-  // Limpa o armazenamento local do navegador e recarrega a página zerada
-  localStorage.clear();
-  window.location.reload();
-}
+      let clientesAtendidos = [];
+      if (typeof bancoDadosRota !== 'undefined') {
+        bancoDadosRota.forEach(bloco => {
+          bloco.clientes.forEach(c => {
+            if (c.status === 'vendido' && c.venda) {
+              clientesAtendidos.push({
+                clienteNome: c.nome,
+                cidade: bloco.cidade,
+                formaPagamento: c.venda.pagamento,
+                valorTotal: c.venda.total,
+                observacao: c.venda.obs,
+                qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
+                qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
+                qtd_uva: c.venda.itens['UVA']?.qtd || 0,
+                qtd_agua_sg: c.venda.itens['FARDO_SG']?.qtd || 0,
+                qtd_agua_cg: c.venda.itens['FARDO_CG']?.qtd || 0,
+                troca_330ml: c.venda.itens['330ML']?.troca || 0,
+                troca_900ml: c.venda.itens['900ML']?.troca || 0,
+                troca_uva: c.venda.itens['UVA']?.troca || 0
+              });
+            }
+          });
+        });
+      }
+
+      const despesasFinal = (typeof listaDespesas !== 'undefined') ? listaDespesas : [];
+
+      try {
+        if (typeof baixarRelatorioFechamento === 'function') {
+          await baixarRelatorioFechamento({
+            vendedor: vendedorNome,
+            clientes: clientesAtendidos,
+            despesas: despesasFinal
+          });
+        }
+      } catch (errPdf) {
+        console.error("Erro ao gerar o PDF:", errPdf);
+      }
+
+      alert("Fechamento concluído e PDF gerado com sucesso!");
+
+      localStorage.clear();
+      window.location.reload();
+    }
     
-    // --- LÓGICA DE ESTOQUE INICIAL ---
+    function abrirModalEstoque() {
+      document.getElementById('modalEstoqueInicial').classList.remove('hidden');
+    }
 
-// Chame esta função NO LUGAR da função que antes liberava a tela da rota direto.
-function abrirModalEstoque() {
-  document.getElementById('modalEstoqueInicial').classList.remove('hidden');
-}
+    async function salvarEstoqueInicial() {
+      const vendedorAtual = document.getElementById('header-vendedor').innerText;
 
-async function salvarEstoqueInicial() {
-  const vendedorAtual = document.getElementById('header-vendedor').innerText;
+      const cxCarga330ml = Number(document.getElementById('carga_330ml').value) || 0;
+      const cxCarga900ml = Number(document.getElementById('carga_900ml').value) || 0;
+      
+      const dadosEstoque = {
+        vendedor_nome: vendedorAtual,
+        data_fechamento: new Date().toISOString().split('T')[0],
+        retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
+        carga_330ml: cxCarga330ml * (CONVERSAO_CAIXAS['330ML'] || 80),
+        retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
+        carga_900ml: cxCarga900ml * (CONVERSAO_CAIXAS['900ML'] || 25),
+        retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
+        carga_uva: Number(document.getElementById('carga_uva').value) || 0,
+        retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
+        carga_agua: Number(document.getElementById('carga_agua').value) || 0,
+        retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas').value) || 0,
+        carga_agua_gas: Number(document.getElementById('carga_agua_gas').value) || 0,
+      };
 
-  const cxCarga330ml = Number(document.getElementById('carga_330ml').value) || 0;
-  const cxCarga900ml = Number(document.getElementById('carga_900ml').value) || 0;
-  
-  // Pega os valores, se estiver vazio vira 0
-  const dadosEstoque = {
-    vendedor_nome: vendedorAtual, // Certifique-se que esta variável existe no seu escopo global
-    data_fechamento: new Date().toISOString().split('T')[0], // Data de hoje formato YYYY-MM-DD
-    retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
-    carga_330ml:cxCarga330ml * (CONVERSAO_CAIXAS['330ML'] || 80),
-    retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
-    carga_900ml:cxCarga900ml * (CONVERSAO_CAIXAS['900ML'] || 25),
-    retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
-    carga_uva: Number(document.getElementById('carga_uva').value) || 0,
-    retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
-    carga_agua: Number(document.getElementById('carga_agua').value) || 0,
-    retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas').value) || 0,
-    carga_agua_gas: Number(document.getElementById('carga_agua_gas').value) || 0,
-  };
+      try {
+        const { data, error } = await supabaseClient
+          .from('fechamentos')
+          .insert([dadosEstoque])
 
-  try {
-    // Insere ou atualiza o fechamento do dia para este vendedor
-    const { data, error } = await supabaseClient
-      .from('fechamentos')
-      .insert([dadosEstoque])
+        if (error) throw error;
+        
+        alert("Estoque inicial gravado com sucesso! Boa rota.");
+        document.getElementById('modalEstoqueInicial').classList.add('hidden');
+        
+        document.getElementById('step-rota').classList.remove('hidden');
+        document.getElementById('box-fechamento').classList.remove('hidden');
+        
+        renderizarCidades();
+        
+      } catch (err) {
+        console.error("Erro ao salvar estoque:", err);
+        alert("Erro ao gravar estoque. Tente novamente.");
+      }
+    }
 
-    if (error) throw error;
-    
-    alert("Estoque inicial gravado com sucesso! Boa rota.");
-    document.getElementById('modalEstoqueInicial').classList.add('hidden');
-    
-    document.getElementById('step-rota').classList.remove('hidden');
-    document.getElementById('box-fechamento').classList.remove('hidden');
-    
-    renderizarCidades();
-    
-  } catch (err) {
-    console.error("Erro ao salvar estoque:", err);
-    alert("Erro ao gravar estoque. Tente novamente.");
-  }
-}
+    function toggleDespesas() {
+      const cont = document.getElementById('conteudo-despesas');
+      const icone = document.getElementById('icone-despesa');
+      if (cont.classList.contains('hidden')) {
+        cont.classList.remove('hidden');
+        icone.innerText = '▲';
+      } else {
+        cont.classList.add('hidden');
+        icone.innerText = '▼';
+      }
+    }
 
-// --- LÓGICA DE DESPESAS ---
+    async function salvarDespesas() {
+      const vendedorAtual = document.getElementById('header-vendedor').innerText;
+      const combustivel = parseFloat(document.getElementById('despesa_combustivel').value) || 0;
+      const almoco = parseFloat(document.getElementById('despesa_almoco').value) || 0;
+      const outras = parseFloat(document.getElementById('despesa_outras_valor').value) || 0;
+      const obs = document.getElementById('despesa_outras_obs').value;
 
-function toggleDespesas() {
-  const cont = document.getElementById('conteudo-despesas');
-  const icone = document.getElementById('icone-despesa');
-  if (cont.classList.contains('hidden')) {
-    cont.classList.remove('hidden');
-    icone.innerText = '▲';
-  } else {
-    cont.classList.add('hidden');
-    icone.innerText = '▼';
-  }
-}
+      if (outras > 0 && obs.trim() === "") {
+        alert("Por favor, descreva do que se trata a despesa em 'Outras'.");
+        return;
+      }
 
-async function salvarDespesas() {
-  const vendedorAtual = document.getElementById('header-vendedor').innerText;
-  const combustivel = parseFloat(document.getElementById('despesa_combustivel').value) || 0;
-  const almoco = parseFloat(document.getElementById('despesa_almoco').value) || 0;
-  const outras = parseFloat(document.getElementById('despesa_outras_valor').value) || 0;
-  const obs = document.getElementById('despesa_outras_obs').value;
+      const hoje = new Date().toISOString().split('T')[0];
 
-  if (outras > 0 && obs.trim() === "") {
-    alert("Por favor, descreva do que se trata a despesa em 'Outras'.");
-    return;
-  }
+      try {
+        const { error } = await supabaseClient
+          .from('fechamentos')
+          .update({
+            despesa_combustivel: combustivel,
+            despesa_almoco: almoco,
+            despesa_outras_valor: outras,
+            despesa_outras_obs: obs
+          })
+          .eq('vendedor_nome', vendedorAtual)
+          .eq('data_fechamento', hoje);
 
-  const hoje = new Date().toISOString().split('T')[0];
-
-  try {
-    const { error } = await supabaseClient
-      .from('fechamentos')
-      .update({
-        despesa_combustivel: combustivel,
-        despesa_almoco: almoco,
-        despesa_outras_valor: outras,
-        despesa_outras_obs: obs
-      })
-      .eq('vendedor_nome', vendedorAtual)
-      .eq('data_fechamento', hoje);
-
-    if (error) throw error;
-    
-    alert("Despesas salvas com sucesso!");
-    toggleDespesas(); // Fecha a sanfona
-  } catch (err) {
-    console.error("Erro ao salvar despesas:", err);
-    alert("Erro ao salvar as despesas. Verifique a internet.");
-  }
-}
+        if (error) throw error;
+        
+        alert("Despesas salvas com sucesso!");
+        toggleDespesas();
+      } catch (err) {
+        console.error("Erro ao salvar despesas:", err);
+        alert("Erro ao salvar as despesas. Verifique a internet.");
+      }
+    }
   </script>
 </body>
 </html>
