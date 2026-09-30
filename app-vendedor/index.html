@@ -514,7 +514,7 @@ if (chkNota) chkNota.checked = false;
       let total = 0;
       PRODUTOS_CATALOGO.forEach(p => {
         const item = itensVendaTemp[p.id];
-        total += Math.max(0, item.qtd - item.troca) * item.preco;
+        total += item.qtd * item.preco;
       });
       document.getElementById('modal-total-val').innerText = fmtMoeda(total);
       return total;
