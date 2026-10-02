@@ -243,6 +243,10 @@
           qtd_uva: Number(dadosCliente.qtd_uva || 0),
           qtd_agua_sg: Number(dadosCliente.qtd_agua_sg || 0),
           qtd_agua_cg: Number(dadosCliente.qtd_agua_cg || 0),
+          qtd_copo: Number(dadosCliente.qtd_copo || 0),
+          qtd_gelo: Number(dadosCliente.qtd_gelo || 0),
+          qtd_venda_troca: Number(dadosCliente.qtd_venda_troca || 0),
+          valor_venda_troca: Number(dadosCliente.valor_venda_troca || 0),
           troca_330ml: Number(dadosCliente.troca_330ml || 0),
           troca_900ml: Number(dadosCliente.troca_900ml || 0),
           troca_uva: Number(dadosCliente.troca_uva || 0),
@@ -270,6 +274,10 @@
       { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
       { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
       { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
+      { id: 'CX_COPO', nome: 'Caixa de Copo', precoPadrao: 32.00, semTroca: true },
+      { id: 'GELO_5KG', nome: 'Gelo 5kg', precoPadrao: 11.00, semTroca: true },
+      // Sempre por último: valor variável (padrão R$ 3,00, editável), destacado em vermelho
+      { id: 'VENDA_TROCA', nome: '🔁 Venda de Trocas', precoPadrao: 3.00, semTroca: true, destaqueTroca: true },
     ];
     
     const PRECOS_ESPECIAIS_VENDEDOR = {
@@ -515,20 +523,22 @@
       PRODUTOS_CATALOGO.forEach(prod => {
         const item = itensVendaTemp[prod.id];
         const row = document.createElement('div');
-        row.className = 'p-2.5 bg-gray-50 rounded-lg border border-gray-200 space-y-2';
+        row.className = prod.destaqueTroca
+          ? 'p-2.5 bg-red-100 rounded-lg border-2 border-red-400 space-y-2 mt-4'
+          : 'p-2.5 bg-gray-50 rounded-lg border border-gray-200 space-y-2';
         row.innerHTML = `
           <div class="flex justify-between items-center">
-            <span class="font-bold text-xs text-gray-800">${prod.nome}</span>
+            <span class="font-bold text-xs ${prod.destaqueTroca ? 'text-red-700' : 'text-gray-800'}">${prod.nome}</span>
             <div class="flex items-center space-x-1">
               <span class="text-[10px] font-semibold text-gray-500">R$:</span>
               <input type="number" inputmode="decimal" step="0.50" value="${item.preco}" onchange="alterarPreco('${prod.id}', this.value)" class="w-16 p-1 text-xs font-bold text-right border border-gray-300 rounded bg-white">
             </div>
           </div>
           <div class="flex justify-between items-center text-xs">
-            <div class="flex items-center space-x-1">
+            ${prod.semTroca ? '<div></div>' : `<div class="flex items-center space-x-1">
               <span class="text-[10px] text-red-600 font-bold">Troca:</span>
               <input type="number" inputmode="numeric" min="0" value="${item.troca}" onchange="alterarTroca('${prod.id}', this.value)" class="w-12 p-1 text-center font-semibold border border-red-200 rounded bg-red-50 text-red-700">
-            </div>
+            </div>`}
             <div class="flex items-center border rounded-lg bg-white overflow-hidden shadow-sm">
               <button onclick="alterarQtd('${prod.id}', -1)" class="px-3 py-1 bg-gray-100 font-bold text-gray-600">-</button>
               <span class="px-3 font-bold text-sm">${item.qtd}</span>
@@ -608,6 +618,10 @@
         qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
         qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
         qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
+        qtd_copo: teveVenda ? (itensVendaTemp['CX_COPO']?.qtd || 0) : 0,
+        qtd_gelo: teveVenda ? (itensVendaTemp['GELO_5KG']?.qtd || 0) : 0,
+        qtd_venda_troca: teveVenda ? (itensVendaTemp['VENDA_TROCA']?.qtd || 0) : 0,
+        valor_venda_troca: teveVenda ? Number(((itensVendaTemp['VENDA_TROCA']?.qtd || 0) * (itensVendaTemp['VENDA_TROCA']?.preco || 0)).toFixed(2)) : 0,
         troca_330ml: teveVenda ? (itensVendaTemp['330ML']?.troca || 0) : 0,
         troca_900ml: teveVenda ? (itensVendaTemp['900ML']?.troca || 0) : 0,
         troca_uva: teveVenda ? (itensVendaTemp['UVA']?.troca || 0) : 0
@@ -650,6 +664,9 @@
                 Uva: ${c.qtd_uva || 0}<br>
                 Água s/gás: ${c.qtd_agua_sg || 0}<br>
                 Água c/gás: ${c.qtd_agua_cg || 0}
+                ${c.qtd_copo ? `<br>Cx Copo: ${c.qtd_copo}` : ''}
+                ${c.qtd_gelo ? `<br>Gelo 5kg: ${c.qtd_gelo}` : ''}
+                ${c.qtd_venda_troca ? `<br><span style="color:#b91c1c;">Venda Trocas: ${c.qtd_venda_troca}</span>` : ''}
               </td>
               <td style="border: 1px solid #999; padding: 5px;">
                 330ml: ${c.troca_330ml || 0}<br>
@@ -753,6 +770,9 @@
                 qtd_uva: c.venda.itens['UVA']?.qtd || 0,
                 qtd_agua_sg: c.venda.itens['FARDO_SG']?.qtd || 0,
                 qtd_agua_cg: c.venda.itens['FARDO_CG']?.qtd || 0,
+                qtd_copo: c.venda.itens['CX_COPO']?.qtd || 0,
+                qtd_gelo: c.venda.itens['GELO_5KG']?.qtd || 0,
+                qtd_venda_troca: c.venda.itens['VENDA_TROCA']?.qtd || 0,
                 troca_330ml: c.venda.itens['330ML']?.troca || 0,
                 troca_900ml: c.venda.itens['900ML']?.troca || 0,
                 troca_uva: c.venda.itens['UVA']?.troca || 0
