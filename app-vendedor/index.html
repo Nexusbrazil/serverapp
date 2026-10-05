@@ -152,6 +152,13 @@
           <label class="block text-xs font-semibold text-gray-600 mb-1">Cidade</label>
           <input type="text" id="avulsa-cidade" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm" placeholder="Ex: Apucarana">
         </div>
+        <label class="flex items-start gap-3 p-3 rounded-xl border-2 border-amber-400 bg-amber-50 cursor-pointer">
+          <input type="checkbox" id="avulsa-fixo" class="mt-1 w-6 h-6 accent-amber-600 shrink-0">
+          <span class="text-sm text-amber-900">
+            <strong class="block text-base">📌 Adicionar FIXO nesta rota</strong>
+            Marque se este cliente passa a fazer parte da rota <span id="avulsa-fixo-rota" class="font-bold"></span>. Se não marcar, é só uma venda avulsa de hoje.
+          </span>
+        </label>
       </div>
 
       <div class="grid grid-cols-2 gap-3 pt-5">
@@ -425,6 +432,8 @@
     function abrirModalVendaAvulsa() {
       document.getElementById('avulsa-nome').value = '';
       document.getElementById('avulsa-cidade').value = '';
+      document.getElementById('avulsa-fixo').checked = false;
+      document.getElementById('avulsa-fixo-rota').innerText = `${document.getElementById('header-vendedor').innerText} · ${document.getElementById('header-rota').innerText}`;
       document.getElementById('modal-avulsa').classList.remove('hidden');
     }
 
@@ -432,19 +441,54 @@
       document.getElementById('modal-avulsa').classList.add('hidden');
     }
 
-    function criarVendaAvulsa() {
+    let criandoAvulso = false;
+    async function criarVendaAvulsa() {
+      if (criandoAvulso) return;
       const nome = document.getElementById('avulsa-nome').value.trim();
       const cidade = document.getElementById('avulsa-cidade').value.trim().toUpperCase();
+      const fixo = document.getElementById('avulsa-fixo').checked;
 
       if (!nome || !cidade) {
         alert("Preencha o nome e a cidade do cliente avulso.");
         return;
       }
 
-      const novoId = Date.now(); // Gera um ID temporário único
+      let novoId = Date.now(); // ID temporário (cliente avulso comum)
+      let nomeExibido = nome + " (AVULSO)"; // Sufixo para controle visual e do backend
+
+      // Cliente marcado como FIXO: grava na rota (clientes_rotas) e passa a ser um cliente normal
+      if (fixo) {
+        const nomeFixo = nome.toUpperCase();
+        const jaExiste = bancoDadosRota.some(b => b.clientes.some(c => c.nome.replace(' (AVULSO)', '').trim().toUpperCase() === nomeFixo));
+        if (jaExiste) {
+          alert("Esse cliente já está nesta rota. Procure ele na lista.");
+          return;
+        }
+        criandoAvulso = true;
+        try {
+          const { data, error } = await supabaseClient
+            .from('clientes_rotas')
+            .insert([{
+              vendedor_nome: document.getElementById('header-vendedor').innerText,
+              dia_semana: document.getElementById('header-rota').innerText,
+              cidade: cidade,
+              nome_cliente: nomeFixo
+            }])
+            .select('id')
+            .single();
+          if (error) throw error;
+          novoId = data.id; // ID real do cadastro
+          nomeExibido = nomeFixo;
+        } catch (err) {
+          console.error("Erro ao fixar cliente na rota:", err);
+          alert("Não consegui fixar o cliente na rota (sem internet?). Desta vez ele será lançado como avulso normal.");
+        }
+        criandoAvulso = false;
+      }
+
       const novoCliente = {
         id: novoId,
-        nome: nome + " (AVULSO)", // Adiciona o sufixo para controle visual e do backend
+        nome: nomeExibido,
         status: 'pendente'
       };
 
