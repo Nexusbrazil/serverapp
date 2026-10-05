@@ -94,7 +94,7 @@
 
     <div id="cidades-container" class="space-y-3"></div>
 
-    <!-- RESUMO DO FECHAMENTO (atualiza sozinho a cada venda e a cada despesa digitada) -->
+    <!-- RESUMO DO FECHAMENTO -->
     <div id="card-resumo-fechamento" class="bg-white border-2 border-blue-900 rounded-xl shadow-md p-4 mt-4">
       <h3 class="font-black text-blue-900 text-sm mb-3">📊 Resumo do Fechamento</h3>
       <div class="space-y-1.5 text-sm">
@@ -120,8 +120,8 @@
           <input type="number" id="retorno_330ml" placeholder="No Carro" class="w-1/4 p-2 border rounded text-sm text-center" min="0">
           <div class="w-1/2">
             <div class="flex gap-1">
-              <input type="number" id="carga_330ml_cx" placeholder="Caixas" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
-              <input type="number" id="carga_330ml_un" placeholder="Unid." oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
+              <input type="number" id="carga_330ml_cx" placeholder="Caixas" max="30" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
+              <input type="number" id="carga_330ml_un" placeholder="Unid." max="2400" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
             </div>
             <p id="carga_330ml_total" class="text-[10px] text-slate-500 text-center mt-0.5 h-3"></p>
           </div>
@@ -131,8 +131,8 @@
           <input type="number" id="retorno_900ml" placeholder="No Carro" class="w-1/4 p-2 border rounded text-sm text-center" min="0">
           <div class="w-1/2">
             <div class="flex gap-1">
-              <input type="number" id="carga_900ml_cx" placeholder="Caixas" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
-              <input type="number" id="carga_900ml_un" placeholder="Unid." oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
+              <input type="number" id="carga_900ml_cx" placeholder="Caixas" max="40" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
+              <input type="number" id="carga_900ml_un" placeholder="Unid." max="1000" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
             </div>
             <p id="carga_900ml_total" class="text-[10px] text-slate-500 text-center mt-0.5 h-3"></p>
           </div>
@@ -537,7 +537,7 @@
             <div onclick="abrirModalVenda(${cli.id})" class="p-3 bg-white border-b last:border-b-0 active:bg-gray-50 flex justify-between items-center cursor-pointer">
               <div>
                 <p class="font-bold text-sm text-gray-800">${cli.nome}</p>
-                ${cli.devendo ? `<p class="text-[11px] font-bold text-red-600 mt-0.5">⚠️ Deve ${fmtMoeda(cli.devendo.total)}${cli.devendo.qtd > 1 ? ` (${cli.devendo.qtd} notinhas)` : ''} · cobrar</p>` : ''}
+                ${cli.devendo ? `<p class="text-[11px] font-bold text-red-600 mt-0.5">⚠️️ Deve ${fmtMoeda(cli.devendo.total)}${cli.devendo.qtd > 1 ? ` (${cli.devendo.qtd} notinhas)` : ''} · cobrar</p>` : ''}
               </div>
               <div>${badge}</div>
             </div>`;
@@ -1033,14 +1033,43 @@
       const vendedorAtual = document.getElementById('header-vendedor').innerText;
 
       // 330ml e 900ml: caixas x unidades por caixa + unidades soltas (sempre gravado em unidades)
+      const cx330 = Number(document.getElementById('carga_330ml_cx').value) || 0;
+      const un330 = Number(document.getElementById('carga_330ml_un').value) || 0;
+      const cx900 = Number(document.getElementById('carga_900ml_cx').value) || 0;
+      const un900 = Number(document.getElementById('carga_900ml_un').value) || 0;
+
+      const total330 = totalCargaUnidades('330ml');
+      const total900 = totalCargaUnidades('900ml');
+
+      // -------------------------------------------------------------
+      // FILTRO ANTI-ERROS DE DIGITAÇÃO
+      // -------------------------------------------------------------
+      if (cx330 > 30) {
+        alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 30 caixas para o suco de 330ml.\n\nVerifique se você não digitou unidades no campo de caixas.");
+        return;
+      }
+      if (total330 > 2400) {
+        alert("⚠️ ERRO: A carga de 330ml (" + total330 + " unidades) está excedendo o limite máximo de segurança (2400 unidades).");
+        return;
+      }
+
+      if (cx900 > 40) {
+        alert("⚠️️ ERRO: Quantidade muito alta!\nO limite máximo é de 40 caixas para o suco de 900ml.\n\nVerifique se você não digitou unidades no campo de caixas.");
+        return;
+      }
+      if (total900 > 1000) {
+        alert("⚠️ ERRO: A carga de 900ml (" + total900 + " unidades) está excedendo o limite máximo de segurança (1000 unidades).");
+        return;
+      }
+      // -------------------------------------------------------------
       
       const dadosEstoque = {
         vendedor_nome: vendedorAtual,
         data_fechamento: new Date().toISOString().split('T')[0],
         retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
-        carga_330ml: totalCargaUnidades('330ml'),
+        carga_330ml: total330,
         retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
-        carga_900ml: totalCargaUnidades('900ml'),
+        carga_900ml: total900,
         retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
         carga_uva: Number(document.getElementById('carga_uva').value) || 0,
         retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
