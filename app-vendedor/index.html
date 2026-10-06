@@ -14,42 +14,22 @@
 <body class="bg-gray-100 text-gray-800 pb-24 select-none">
 
   <!-- CABEÇALHO FIXO -->
-  <header class="bg-blue-700 text-white p-4 sticky top-0 z-30 shadow-md flex justify-between items-center">
-    <div>
-      <h1 class="font-bold text-lg leading-tight" id="header-vendedor">Sunap Vendas</h1>
-      <p class="text-xs text-blue-200" id="header-rota">Faça login para iniciar</p>
-    </div>
-    <div id="header-actions" class="hidden flex gap-2">
-      <button onclick="sairSistema()" class="bg-blue-900 text-[10px] px-2 py-1 rounded border border-blue-400 font-bold hover:bg-blue-800">Sair</button>
+  <header class="bg-blue-700 text-white p-4 sticky top-0 z-30 shadow-md">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="font-bold text-lg leading-tight" id="header-vendedor">Selecione o Vendedor</h1>
+        <p class="text-xs text-blue-200" id="header-rota">Aguardando definição de rota...</p>
+      </div>
+      <button onclick="resetarDadosSimulacao()" class="bg-blue-900 text-[10px] px-2 py-1 rounded border border-blue-400">Resetar</button>
     </div>
   </header>
 
-  <!-- PASSO 0: LOGIN -->
-  <section id="step-login" class="p-4 max-w-md mx-auto space-y-4 pt-16">
-    <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 text-center">
-      <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg text-2xl">🥤</div>
-      <h2 class="font-black text-blue-900 text-xl mb-1">Painel do Vendedor</h2>
-      <p class="text-xs text-gray-500 mb-6">Identifique-se para iniciar o dia</p>
-      
-      <div class="space-y-4">
-        <div>
-          <input type="text" id="login-user" placeholder="Nome de Usuário" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none uppercase" autocomplete="off">
-        </div>
-        <div>
-          <input type="password" id="login-pass" placeholder="Senha" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none">
-        </div>
-        <button onclick="fazerLogin()" class="w-full bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95">ACESSAR O SISTEMA</button>
-      </div>
-      <p id="login-erro" class="text-xs text-red-600 font-bold mt-4 hidden">Usuário ou senha incorretos!</p>
-    </div>
-  </section>
-
   <!-- PASSO 1: SELEÇÃO DE VENDEDOR E ROTA DO DIA -->
-  <section id="step-config" class="p-4 max-w-md mx-auto space-y-4 hidden">
+  <section id="step-config" class="p-4 max-w-md mx-auto space-y-4">
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
       <h2 class="font-bold text-gray-700 text-base border-b pb-2">🚚 Configurar Rota do Dia</h2>
       
-      <div id="container-select-vendedor">
+      <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Vendedor</label>
         <select id="select-vendedor" onchange="carregarRotasDoVendedor(this.value)" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium text-slate-900 uppercase">
           <option value="">Carregando vendedores...</option>
@@ -73,7 +53,7 @@
   <main id="step-rota" class="p-4 pb-28 max-w-md mx-auto space-y-3 hidden">
     <div class="flex justify-between items-center mb-1">
       <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
-      <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota</button>
+      <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota / Vendedor</button>
     </div>
     
     <div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
@@ -276,24 +256,6 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
 
-    // SISTEMA DE USUÁRIOS E LOGIN
-    const USUARIOS = {
-      "ADMIN": { senha: "123", tipo: "MESTRE", nome: "ADMIN" },
-      "PAULO": { senha: "sunap", tipo: "MESTRE", nome: "PAULO" },
-      "SÉRGIO": { senha: "123", tipo: "VENDEDOR", nome: "SÉRGIO" },
-      "SERGIO": { senha: "123", tipo: "VENDEDOR", nome: "SÉRGIO" },
-      "ALEX": { senha: "123", tipo: "VENDEDOR", nome: "ALEX" },
-      "WERNEK": { senha: "123", tipo: "VENDEDOR", nome: "WERNEK" },
-      "WERNECK": { senha: "123", tipo: "VENDEDOR", nome: "WERNEK" },
-      "DIONEI": { senha: "123", tipo: "VENDEDOR", nome: "DIONEI" },
-      "LUAN": { senha: "123", tipo: "VENDEDOR", nome: "LUAN" },
-      "CHARLES": { senha: "123", tipo: "VENDEDOR", nome: "CHARLES" },
-      "GUSTAVO": { senha: "123", tipo: "VENDEDOR", nome: "GUSTAVO" },
-      "FELIPE": { senha: "123", tipo: "VENDEDOR", nome: "FELIPE" },
-      "ALESSANDRO": { senha: "123", tipo: "VENDEDOR", nome: "ALESSANDRO" }
-    };
-    
-    let usuarioLogado = null;
     let bancoDadosRota = [];
     let clienteAtual = null;
     let itensVendaTemp = {};
@@ -301,55 +263,10 @@
     let rotaEncerrada = false;
 
     window.onload = function() {
-      const userSalvo = localStorage.getItem('sunap_user');
-      if (userSalvo && USUARIOS[userSalvo]) {
-        document.getElementById('login-user').value = userSalvo;
-        document.getElementById('login-pass').value = USUARIOS[userSalvo].senha;
-        fazerLogin();
-      } else {
-        document.getElementById('step-login').classList.remove('hidden');
-        document.getElementById('step-config').classList.add('hidden');
-      }
+      carregarVendedoresAPI();
     };
 
-    function fazerLogin() {
-      const userVal = document.getElementById('login-user').value.trim().toUpperCase();
-      const passVal = document.getElementById('login-pass').value.trim();
-      const erroEl = document.getElementById('login-erro');
-
-      if (USUARIOS[userVal] && USUARIOS[userVal].senha === passVal) {
-        usuarioLogado = USUARIOS[userVal];
-        erroEl.classList.add('hidden');
-        
-        localStorage.setItem('sunap_user', userVal);
-        document.getElementById('step-login').classList.add('hidden');
-        document.getElementById('step-config').classList.remove('hidden');
-        document.getElementById('header-actions').classList.remove('hidden');
-
-        const headerVend = document.getElementById('header-vendedor');
-        const selectVend = document.getElementById('select-vendedor');
-
-        if (usuarioLogado.tipo === 'VENDEDOR') {
-          headerVend.innerText = usuarioLogado.nome;
-          selectVend.innerHTML = `<option value="${usuarioLogado.nome}">${usuarioLogado.nome}</option>`;
-          selectVend.disabled = true;
-          document.getElementById('container-select-vendedor').classList.add('opacity-50');
-          carregarRotasDoVendedor(usuarioLogado.nome);
-        } else {
-          headerVend.innerText = 'Modo Mestre';
-          carregarVendedoresAPI();
-        }
-      } else {
-        erroEl.classList.remove('hidden');
-      }
-    }
-
-    function sairSistema() {
-      if(confirm("Deseja desconectar sua conta do sistema?")) {
-        localStorage.removeItem('sunap_user');
-        location.reload();
-      }
-    }
+    function resetarDadosSimulacao() { location.reload(); }
 
     // PERSISTÊNCIA E RECUPERAÇÃO DO ESTADO NO SUPABASE
     async function carregarProgressoDoDia(vend) {
