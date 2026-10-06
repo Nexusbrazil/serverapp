@@ -283,11 +283,19 @@
       document.getElementById('btn-iniciar-txt').innerText = "INICIAR ATENDIMENTOS →";
       if (error) { console.error("Erro recuperando progresso", error); return []; }
       
-      return data.filter(r => {
+      const registrosHoje = data.filter(r => {
         const dC = r.created_at ? new Date(r.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
         const dA = r.data_atendimento ? new Date(r.data_atendimento).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
         return dC === hojeLocal || dA === hojeLocal || r.data_fechamento === hojeLocal;
       });
+
+      // SE O FECHAMENTO DO DIA JÁ FOI CONCLUÍDO DEFINITIVAMENTE, NÃO RECUPERA OS DADOS ANTERIORES E INICIA ZERADO!
+      const jaConcluido = registrosHoje.some(r => r.status === 'FECHAMENTO_CONCLUIDO');
+      if (jaConcluido) {
+        return [];
+      }
+
+      return registrosHoje;
     }
 
     async function salvarClienteAoVivo(dadosCliente) {
@@ -751,7 +759,7 @@
         tituloCliente.appendChild(aviso);
       }
 
-      // IMPORTANTE: LIMPAR SEMPRE OS DADOS DO CLIENTE ANTERIOR PARA NÃO SOBREPOR
+      // LIMPAR SEMPRE OS DADOS DO CLIENTE ANTERIOR PARA NÃO SOBREPOR
       document.getElementById('modal-pagamento').value = 'Dinheiro';
       document.getElementById('modal-obs').value = '';
       document.getElementById('chk-nota').checked = false;
@@ -773,7 +781,7 @@
         itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: precoAplicado };
       });
 
-      // SE JÁ TIVER VENDA GRAVADA, ELE PREENCHE DE VOLTA COM O QUE O VENDEDOR COLOCOU
+      // SE JÁ TIVER VENDA GRAVADA, PREENCHE DE VOLTA COM O QUE FOI SALVO
       if (clienteAtual.venda) {
         document.getElementById('modal-pagamento').value = clienteAtual.venda.pagamento;
         document.getElementById('modal-obs').value = clienteAtual.venda.obs || '';
@@ -970,10 +978,17 @@
           `).join('')
           : '<tr><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
 
+        // ELEMENTO ANEXADO AO DOM COM LARGURA DEFINIDA PARA O HTML2CANVAS CONSEGUIR RENDERIZAR
         const el = document.createElement('div');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        el.style.top = '0';
+        el.style.width = '750px';
         el.style.padding = '15px';
+        el.style.background = '#ffffff';
         el.style.fontFamily = 'Arial, sans-serif';
         el.style.fontSize = '12px';
+        el.style.color = '#000000';
         el.innerHTML = `
           <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
             <h2 style="margin: 0; text-transform: uppercase; font-size: 16px;">Comprovante de Fechamento de Rota</h2>
@@ -1011,15 +1026,17 @@
             </tr></thead>
             <tbody>${prazoHTML}</tbody>
           </table>
-          <div style="margin-top: 15px; border: 2px solid #000; padding: 10px;">
-            <p><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
-            <p>• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
-            <p style="color:#b45309;"><strong>• Total A Prazo (notinhas a cobrar): R$ ${totalPrazo.toFixed(2)}</strong></p>
-            <p><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
-            <hr>
-            <p style="font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
+          <div style="margin-top: 15px; border: 2px solid #000; padding: 10px; page-break-inside: avoid;">
+            <p style="margin: 4px 0;"><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
+            <p style="margin: 4px 0;">• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
+            <p style="margin: 4px 0; color:#b45309;"><strong>• Total A Prazo (notinhas a cobrar): R$ ${totalPrazo.toFixed(2)}</strong></p>
+            <p style="margin: 4px 0;"><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
+            <hr style="margin: 8px 0;">
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
           </div>
         `;
+
+        document.body.appendChild(el);
 
         const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
         const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataHoje.replace(/\//g, '-')}.pdf`;
@@ -1028,13 +1045,20 @@
           margin: 0.3,
           filename: nomeArquivo,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, logging: false },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+          html2canvas: { scale: 2, logging: false, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         html2pdf().set(opcoes).from(el).save()
-          .then(() => resolve())
-          .catch((err) => reject(err));
+          .then(() => {
+            if (el.parentNode) el.parentNode.removeChild(el);
+            resolve();
+          })
+          .catch((err) => {
+            if (el.parentNode) el.parentNode.removeChild(el);
+            reject(err);
+          });
       });
     }
 
@@ -1052,6 +1076,21 @@
       const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O aplicativo será resetado para amanhã.");
       if (!confirmou) return;
 
+      // GRAVA A MARCAÇÃO DEFINITIVA DE QUE O FECHAMENTO DO DIA FOI CONCLUÍDO
+      const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      try {
+        await supabaseClient
+          .from('fechamentos')
+          .insert([{
+            vendedor_nome: vendedorNome,
+            data_fechamento: hoje,
+            data_atendimento: new Date().toISOString(),
+            status: 'FECHAMENTO_CONCLUIDO'
+          }]);
+      } catch (err) {
+        console.error("Erro ao gravar sinal de fechamento concluído:", err);
+      }
+
       let clientesAtendidos = [];
       if (typeof bancoDadosRota !== 'undefined') {
         bancoDadosRota.forEach(bloco => {
@@ -1063,17 +1102,17 @@
                 formaPagamento: c.venda.pagamento,
                 valorTotal: c.venda.total,
                 observacao: c.venda.obs,
-                qtd_330ml: c.venda.itens['330ML']?.qtd || 0,
-                qtd_900ml: c.venda.itens['900ML']?.qtd || 0,
-                qtd_uva: c.venda.itens['UVA']?.qtd || 0,
-                qtd_agua_sg: c.venda.itens['FARDO_SG']?.qtd || 0,
-                qtd_agua_cg: c.venda.itens['FARDO_CG']?.qtd || 0,
-                qtd_copo: c.venda.itens['CX_COPO']?.qtd || 0,
-                qtd_gelo: c.venda.itens['GELO_5KG']?.qtd || 0,
-                qtd_venda_troca: c.venda.itens['VENDA_TROCA']?.qtd || 0,
-                troca_330ml: c.venda.itens['330ML']?.troca || 0,
-                troca_900ml: c.venda.itens['900ML']?.troca || 0,
-                troca_uva: c.venda.itens['UVA']?.troca || 0
+                qtd_330ml: c.venda.itens ? (c.venda.itens['330ML']?.qtd || 0) : 0,
+                qtd_900ml: c.venda.itens ? (c.venda.itens['900ML']?.qtd || 0) : 0,
+                qtd_uva: c.venda.itens ? (c.venda.itens['UVA']?.qtd || 0) : 0,
+                qtd_agua_sg: c.venda.itens ? (c.venda.itens['FARDO_SG']?.qtd || 0) : 0,
+                qtd_agua_cg: c.venda.itens ? (c.venda.itens['FARDO_CG']?.qtd || 0) : 0,
+                qtd_copo: c.venda.itens ? (c.venda.itens['CX_COPO']?.qtd || 0) : 0,
+                qtd_gelo: c.venda.itens ? (c.venda.itens['GELO_5KG']?.qtd || 0) : 0,
+                qtd_venda_troca: c.venda.itens ? (c.venda.itens['VENDA_TROCA']?.qtd || 0) : 0,
+                troca_330ml: c.venda.itens ? (c.venda.itens['330ML']?.troca || 0) : 0,
+                troca_900ml: c.venda.itens ? (c.venda.itens['900ML']?.troca || 0) : 0,
+                troca_uva: c.venda.itens ? (c.venda.itens['UVA']?.troca || 0) : 0
               });
             }
           });
