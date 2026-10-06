@@ -14,37 +14,57 @@
 <body class="bg-gray-100 text-gray-800 pb-24 select-none">
 
   <!-- CABEÇALHO FIXO -->
-  <header class="bg-blue-700 text-white p-4 sticky top-0 z-30 shadow-md">
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="font-bold text-lg leading-tight" id="header-vendedor">Selecione o Vendedor</h1>
-        <p class="text-xs text-blue-200" id="header-rota">Aguardando definição de rota...</p>
-      </div>
-      <button onclick="resetarDadosSimulacao()" class="bg-blue-900 text-[10px] px-2 py-1 rounded border border-blue-400">Resetar</button>
+  <header class="bg-blue-700 text-white p-4 sticky top-0 z-30 shadow-md flex justify-between items-center">
+    <div>
+      <h1 class="font-bold text-lg leading-tight" id="header-vendedor">Sunap Vendas</h1>
+      <p class="text-xs text-blue-200" id="header-rota">Faça login para iniciar</p>
+    </div>
+    <div id="header-actions" class="hidden flex gap-2">
+      <button onclick="sairSistema()" class="bg-blue-900 text-[10px] px-2 py-1 rounded border border-blue-400 font-bold hover:bg-blue-800">Sair</button>
     </div>
   </header>
 
+  <!-- PASSO 0: LOGIN -->
+  <section id="step-login" class="p-4 max-w-md mx-auto space-y-4 pt-16">
+    <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200 text-center">
+      <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg text-2xl">🥤</div>
+      <h2 class="font-black text-blue-900 text-xl mb-1">Painel do Vendedor</h2>
+      <p class="text-xs text-gray-500 mb-6">Identifique-se para iniciar o dia</p>
+      
+      <div class="space-y-4">
+        <div>
+          <input type="text" id="login-user" placeholder="Nome de Usuário" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none uppercase" autocomplete="off">
+        </div>
+        <div>
+          <input type="password" id="login-pass" placeholder="Senha" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+        <button onclick="fazerLogin()" class="w-full bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold py-3.5 rounded-xl shadow-lg transition transform active:scale-95">ACESSAR O SISTEMA</button>
+      </div>
+      <p id="login-erro" class="text-xs text-red-600 font-bold mt-4 hidden">Usuário ou senha incorretos!</p>
+    </div>
+  </section>
+
   <!-- PASSO 1: SELEÇÃO DE VENDEDOR E ROTA DO DIA -->
-  <section id="step-config" class="p-4 max-w-md mx-auto space-y-4">
+  <section id="step-config" class="p-4 max-w-md mx-auto space-y-4 hidden">
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
       <h2 class="font-bold text-gray-700 text-base border-b pb-2">🚚 Configurar Rota do Dia</h2>
       
-      <div>
+      <div id="container-select-vendedor">
         <label class="block text-xs font-semibold text-gray-600 mb-1">Vendedor</label>
-        <select id="select-vendedor" onchange="carregarRotasDoVendedor(this.value)" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+        <select id="select-vendedor" onchange="carregarRotasDoVendedor(this.value)" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium text-slate-900 uppercase">
           <option value="">Carregando vendedores...</option>
         </select>
       </div>
 
       <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Selecione a Rota / Dia</label>
-        <select id="select-rota" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium">
+        <select id="select-rota" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-lg font-medium text-slate-900 uppercase">
           <option value="">Selecione o Vendedor primeiro</option>
         </select>
       </div>
 
-      <button onclick="iniciarRota()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg">
-        INICIAR ATENDIMENTOS →
+      <button onclick="iniciarRota()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
+        <span id="btn-iniciar-txt">INICIAR ATENDIMENTOS →</span>
       </button>
     </div>
   </section>
@@ -53,7 +73,7 @@
   <main id="step-rota" class="p-4 pb-28 max-w-md mx-auto space-y-3 hidden">
     <div class="flex justify-between items-center mb-1">
       <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cidades da Rota</span>
-      <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota / Vendedor</button>
+      <button onclick="voltarConfig()" class="text-xs text-blue-600 font-semibold underline">Alterar Rota</button>
     </div>
     
     <div class="mb-4 bg-white border border-slate-200 rounded-lg shadow-sm">
@@ -113,7 +133,7 @@
   <div id="modalEstoqueInicial" class="hidden fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5 max-h-[90vh] overflow-y-auto">
       <h2 class="text-xl font-bold text-slate-800 mb-2">Conferência de Estoque</h2>
-      <p class="text-xs text-slate-500 mb-4">Informe o que sobrou de ontem (No Carro, em unidades) e o que está pegando agora no barracão (Nova Carga). No 330ml e no 900ml você pode informar em caixas, em unidades ou nos dois (1 cx de 330ml = 80 un; 1 cx de 900ml = 25 un).</p>
+      <p class="text-xs text-slate-500 mb-4">Informe o que sobrou de ontem (No Carro) e o que está pegando agora no barracão (Nova Carga).</p>
       <div class="space-y-3">
         <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
           <span class="font-bold text-sm w-1/4">330ml</span>
@@ -184,7 +204,7 @@
           <input type="checkbox" id="avulsa-fixo" class="mt-1 w-6 h-6 accent-amber-600 shrink-0">
           <span class="text-sm text-amber-900">
             <strong class="block text-base">📌 Adicionar FIXO nesta rota</strong>
-            Marque se este cliente passa a fazer parte da rota <span id="avulsa-fixo-rota" class="font-bold"></span>. Se não marcar, é só uma venda avulsa de hoje.
+            Marque se este cliente passa a fazer parte da rota <span id="avulsa-fixo-rota" class="font-bold"></span>.
           </span>
         </label>
       </div>
@@ -256,23 +276,121 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const URL_API = "https://server-sux7.onrender.com/api";
 
+    // SISTEMA DE USUÁRIOS E LOGIN
+    const USUARIOS = {
+      "ADMIN": { senha: "123", tipo: "MESTRE", nome: "ADMIN" },
+      "PAULO": { senha: "sunap", tipo: "MESTRE", nome: "PAULO" },
+      "SÉRGIO": { senha: "123", tipo: "VENDEDOR", nome: "SÉRGIO" },
+      "SERGIO": { senha: "123", tipo: "VENDEDOR", nome: "SÉRGIO" },
+      "ALEX": { senha: "123", tipo: "VENDEDOR", nome: "ALEX" },
+      "WERNEK": { senha: "123", tipo: "VENDEDOR", nome: "WERNEK" },
+      "WERNECK": { senha: "123", tipo: "VENDEDOR", nome: "WERNEK" },
+      "DIONEI": { senha: "123", tipo: "VENDEDOR", nome: "DIONEI" },
+      "LUAN": { senha: "123", tipo: "VENDEDOR", nome: "LUAN" },
+      "CHARLES": { senha: "123", tipo: "VENDEDOR", nome: "CHARLES" },
+      "GUSTAVO": { senha: "123", tipo: "VENDEDOR", nome: "GUSTAVO" },
+      "FELIPE": { senha: "123", tipo: "VENDEDOR", nome: "FELIPE" },
+      "ALESSANDRO": { senha: "123", tipo: "VENDEDOR", nome: "ALESSANDRO" }
+    };
+    
+    let usuarioLogado = null;
+    let bancoDadosRota = [];
+    let clienteAtual = null;
+    let itensVendaTemp = {};
+    let sanfonasAbertas = {};
+    let rotaEncerrada = false;
+
+    window.onload = function() {
+      const userSalvo = localStorage.getItem('sunap_user');
+      if (userSalvo && USUARIOS[userSalvo]) {
+        document.getElementById('login-user').value = userSalvo;
+        document.getElementById('login-pass').value = USUARIOS[userSalvo].senha;
+        fazerLogin();
+      } else {
+        document.getElementById('step-login').classList.remove('hidden');
+        document.getElementById('step-config').classList.add('hidden');
+      }
+    };
+
+    function fazerLogin() {
+      const userVal = document.getElementById('login-user').value.trim().toUpperCase();
+      const passVal = document.getElementById('login-pass').value.trim();
+      const erroEl = document.getElementById('login-erro');
+
+      if (USUARIOS[userVal] && USUARIOS[userVal].senha === passVal) {
+        usuarioLogado = USUARIOS[userVal];
+        erroEl.classList.add('hidden');
+        
+        localStorage.setItem('sunap_user', userVal);
+        document.getElementById('step-login').classList.add('hidden');
+        document.getElementById('step-config').classList.remove('hidden');
+        document.getElementById('header-actions').classList.remove('hidden');
+
+        const headerVend = document.getElementById('header-vendedor');
+        const selectVend = document.getElementById('select-vendedor');
+
+        if (usuarioLogado.tipo === 'VENDEDOR') {
+          headerVend.innerText = usuarioLogado.nome;
+          selectVend.innerHTML = `<option value="${usuarioLogado.nome}">${usuarioLogado.nome}</option>`;
+          selectVend.disabled = true;
+          document.getElementById('container-select-vendedor').classList.add('opacity-50');
+          carregarRotasDoVendedor(usuarioLogado.nome);
+        } else {
+          headerVend.innerText = 'Modo Mestre';
+          carregarVendedoresAPI();
+        }
+      } else {
+        erroEl.classList.remove('hidden');
+      }
+    }
+
+    function sairSistema() {
+      if(confirm("Deseja desconectar sua conta do sistema?")) {
+        localStorage.removeItem('sunap_user');
+        location.reload();
+      }
+    }
+
+    // PERSISTÊNCIA E RECUPERAÇÃO DO ESTADO NO SUPABASE
+    async function carregarProgressoDoDia(vend) {
+      const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      document.getElementById('btn-iniciar-txt').innerText = "RECUPERANDO DADOS...";
+      
+      const { data, error } = await supabaseClient
+        .from('fechamentos')
+        .select('*')
+        .ilike('vendedor_nome', vend)
+        .order('created_at', { ascending: true })
+        .limit(1000);
+      
+      document.getElementById('btn-iniciar-txt').innerText = "INICIAR ATENDIMENTOS →";
+      if (error) { console.error("Erro recuperando progresso", error); return []; }
+      
+      return data.filter(r => {
+        const dC = r.created_at ? new Date(r.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
+        const dA = r.data_atendimento ? new Date(r.data_atendimento).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
+        return dC === hojeLocal || dA === hojeLocal || r.data_fechamento === hojeLocal;
+      });
+    }
+
     async function salvarClienteAoVivo(dadosCliente) {
       try {
         let docSolicitado = null;
-        if (dadosCliente.precisaNota && dadosCliente.precisaBoleto) {
-          docSolicitado = 'NOTA E BOLETO';
-        } else if (dadosCliente.precisaNota) {
-          docSolicitado = 'NOTA';
-        } else if (dadosCliente.precisaBoleto) {
-          docSolicitado = 'BOLETO';
-        }
+        if (dadosCliente.precisaNota && dadosCliente.precisaBoleto) docSolicitado = 'NOTA E BOLETO';
+        else if (dadosCliente.precisaNota) docSolicitado = 'NOTA';
+        else if (dadosCliente.precisaBoleto) docSolicitado = 'BOLETO';
         
+        // Garante que o data_atendimento nunca mude após ser gerado a primeira vez pro mesmo cliente
+        if (!clienteAtual.data_atendimento_banco) {
+          clienteAtual.data_atendimento_banco = new Date().toISOString();
+        }
+
         const payload = {
           vendedor_nome: dadosCliente.vendedor,
           cliente_id: dadosCliente.clienteId,
           cliente_nome: dadosCliente.clienteNome,
           cidade: dadosCliente.cidade,
-          data_atendimento: new Date().toISOString(),
+          data_atendimento: clienteAtual.data_atendimento_banco,
           qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
           qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
           qtd_uva: Number(dadosCliente.qtd_uva || 0),
@@ -297,7 +415,6 @@
           .upsert(payload, { onConflict: 'vendedor_nome, cliente_id, data_atendimento' });
 
         if (error) throw error;
-        console.log('Cliente enviado ao vivo para o Supabase!');
       } catch (err) {
         console.error('Erro ao enviar para o Supabase:', err);
       }
@@ -311,44 +428,22 @@
       { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
       { id: 'CX_COPO', nome: 'Caixa de Copo', precoPadrao: 32.00, semTroca: true },
       { id: 'GELO_5KG', nome: 'Gelo 5kg', precoPadrao: 11.00, semTroca: true },
-      // Sempre por último: valor variável (padrão R$ 3,00, editável), destacado em vermelho
       { id: 'VENDA_TROCA', nome: '🔁 Venda de Trocas', precoPadrao: 3.00, semTroca: true, destaqueTroca: true },
     ];
     
-    const PRECOS_ESPECIAIS_VENDEDOR = {
-      "GUSTAVO": {
-        "330ML": 5.30,
-      }
-    };
-    
-    const CONVERSAO_CAIXAS = {
-      '330ML': 80, 
-      '900ML': 25  
-    };
-
-    let bancoDadosRota = [];
-    let clienteAtual = null;
-    let itensVendaTemp = {};
-    let sanfonasAbertas = {};
-    let rotaEncerrada = false;
+    const PRECOS_ESPECIAIS_VENDEDOR = { "GUSTAVO": { "330ML": 5.30 } };
+    const CONVERSAO_CAIXAS = { '330ML': 80, '900ML': 25 };
 
     const fmtMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    window.onload = function() {
-      carregarVendedoresAPI();
-    };
 
     async function carregarVendedoresAPI() {
       const selectVend = document.getElementById('select-vendedor');
       try {
         const res = await fetch(`${URL_API}/vendedores-cidades`);
         const vendedores = await res.json();
-
         selectVend.innerHTML = '<option value="">-- Selecione o Vendedor --</option>';
         vendedores.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value = v;
-          opt.textContent = v;
+          const opt = document.createElement('option'); opt.value = v; opt.textContent = v;
           selectVend.appendChild(opt);
         });
       } catch (e) {
@@ -358,21 +453,14 @@
 
     async function carregarRotasDoVendedor(vendedor) {
       const selectRota = document.getElementById('select-rota');
-      if (!vendedor) {
-        selectRota.innerHTML = '<option value="">Selecione o Vendedor primeiro</option>';
-        return;
-      }
-
+      if (!vendedor) { selectRota.innerHTML = '<option value="">Selecione o Vendedor primeiro</option>'; return; }
       selectRota.innerHTML = '<option value="">Carregando rotas/dias...</option>';
       try {
         const res = await fetch(`${URL_API}/vendedores-cidades?vendedor=${encodeURIComponent(vendedor)}`);
         const rotas = await res.json();
-
         selectRota.innerHTML = '<option value="">-- Selecione a Rota / Dia --</option>';
         rotas.forEach(r => {
-          const opt = document.createElement('option');
-          opt.value = r;
-          opt.textContent = r;
+          const opt = document.createElement('option'); opt.value = r; opt.textContent = r;
           selectRota.appendChild(opt);
         });
       } catch (e) {
@@ -380,10 +468,7 @@
       }
     }
 
-    // Lembrete de notinhas a prazo em aberto (vendas de dias anteriores, menos o que o escritório já deu baixa)
-    function normNomeCliente(t) {
-      return String(t || '').replace(/\(AVULSO\)/i, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
-    }
+    function normNomeCliente(t) { return String(t || '').replace(/\(AVULSO\)/i, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
     function escHtml(t) { return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
     async function carregarNotinhasEmAberto(vend) {
@@ -394,10 +479,10 @@
             .ilike('vendedor_nome', vend).ilike('forma_pagamento', '%prazo%').neq('status', 'EXCLUIDO').limit(3000),
           supabaseClient.from('notinhas_baixas').select('cliente_nome,data_venda,valor').ilike('vendedor_nome', vend).limit(3000)
         ]);
-        if (rv.error || rb.error) throw (rv.error || rb.error); // sem a tabela de baixas não dá para saber o que já foi pago: não avisa nada
+        if (rv.error || rb.error) throw (rv.error || rb.error);
 
         const diaDe = r => new Date(r.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        const grupos = {}; // cliente + dia -> valores (reenvios idênticos contam uma vez só)
+        const grupos = {}; 
         (rv.data || []).forEach(r => {
           const valor = Number(r.valor_total || 0);
           const d = diaDe(r);
@@ -460,11 +545,104 @@
         document.getElementById('header-vendedor').innerText = vend;
         document.getElementById('header-rota').innerText = rotaSel;
 
+        // RESTAURAÇÃO DE PROGRESSO
+        const progressoHoje = await carregarProgressoDoDia(vend);
+        let estoquePreenchido = false;
+        const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+        progressoHoje.forEach(p => {
+          // Restaura Despesas / Estoque Inicial
+          if (p.data_fechamento === hojeLocal && (p.carga_330ml != null || p.carga_900ml != null)) {
+            estoquePreenchido = true;
+            document.getElementById('despesa_combustivel').value = p.despesa_combustivel || '';
+            document.getElementById('despesa_almoco').value = p.despesa_almoco || '';
+            document.getElementById('despesa_outras_valor').value = p.despesa_outras_valor || '';
+            document.getElementById('despesa_outras_obs').value = p.despesa_outras_obs || '';
+            despesasSalvasAssinatura = lerDespesasDigitadas().assinatura;
+          }
+
+          // Restaura Clientes na Rota Atual e Avulsos
+          if (p.cliente_id) {
+            let clienteAchado = false;
+            bancoDadosRota.forEach(bloco => {
+              let cli = bloco.clientes.find(c => String(c.id) === String(p.cliente_id));
+              if (cli) {
+                clienteAchado = true;
+                cli.data_atendimento_banco = p.data_atendimento;
+                if (p.status === 'CONCLUIDO') {
+                  cli.status = 'vendido';
+                  cli.venda = {
+                    total: Number(p.valor_total || 0),
+                    pagamento: p.forma_pagamento || 'Dinheiro',
+                    obs: p.observacao || '',
+                    precisaNota: String(p.solicitacao_documento).includes('NOTA'),
+                    precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
+                    itens: {
+                      '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
+                      '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
+                      'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
+                      'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
+                      'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
+                      'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
+                      'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
+                      'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
+                    }
+                  };
+                } else if (p.status === 'NAO_COMPROU') {
+                  cli.status = 'nao_comprou';
+                }
+              }
+            });
+
+            // Se for avulso que não estava na listagem da API original
+            if (!clienteAchado) {
+              let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === (p.cidade || 'AVULSOS').toUpperCase());
+              let newCli = {
+                id: p.cliente_id,
+                nome: p.cliente_nome,
+                data_atendimento_banco: p.data_atendimento,
+                status: p.status === 'CONCLUIDO' ? 'vendido' : (p.status === 'NAO_COMPROU' ? 'nao_comprou' : 'pendente')
+              };
+              if (p.status === 'CONCLUIDO') {
+                newCli.venda = {
+                  total: Number(p.valor_total || 0),
+                  pagamento: p.forma_pagamento || 'Dinheiro',
+                  obs: p.observacao || '',
+                  precisaNota: String(p.solicitacao_documento).includes('NOTA'),
+                  precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
+                  itens: {
+                      '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
+                      '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
+                      'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
+                      'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
+                      'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
+                      'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
+                      'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
+                      'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
+                  }
+                };
+              }
+              if (blocoCidade) {
+                blocoCidade.clientes.push(newCli);
+              } else {
+                bancoDadosRota.push({ cidade: p.cidade || 'AVULSOS', clientes: [newCli] });
+              }
+            }
+          }
+        });
+
         await carregarNotinhasEmAberto(vend);
 
         document.getElementById('step-config').classList.add('hidden');
 
-        abrirModalEstoque();
+        // Se o estoque já foi inserido hoje, pula a tela de conferência de carga
+        if (estoquePreenchido) {
+          document.getElementById('step-rota').classList.remove('hidden');
+          document.getElementById('box-fechamento').classList.remove('hidden');
+          renderizarCidades();
+        } else {
+          abrirModalEstoque();
+        }
         
       } catch (e) {
         alert("Erro ao buscar rota do servidor: " + e.message);
@@ -537,7 +715,7 @@
             <div onclick="abrirModalVenda(${cli.id})" class="p-3 bg-white border-b last:border-b-0 active:bg-gray-50 flex justify-between items-center cursor-pointer">
               <div>
                 <p class="font-bold text-sm text-gray-800">${cli.nome}</p>
-                ${cli.devendo ? `<p class="text-[11px] font-bold text-red-600 mt-0.5">⚠️️ Deve ${fmtMoeda(cli.devendo.total)}${cli.devendo.qtd > 1 ? ` (${cli.devendo.qtd} notinhas)` : ''} · cobrar</p>` : ''}
+                ${cli.devendo ? `<p class="text-[11px] font-bold text-red-600 mt-0.5">⚠ Deve ${fmtMoeda(cli.devendo.total)}${cli.devendo.qtd > 1 ? ` (${cli.devendo.qtd} notinhas)` : ''} · cobrar</p>` : ''}
               </div>
               <div>${badge}</div>
             </div>`;
@@ -560,7 +738,6 @@
       renderizarCidades();
     }
 
-    // --- FUNÇÕES DA VENDA AVULSA ---
     function abrirModalVendaAvulsa() {
       document.getElementById('avulsa-nome').value = '';
       document.getElementById('avulsa-cidade').value = '';
@@ -585,10 +762,9 @@
         return;
       }
 
-      let novoId = Date.now(); // ID temporário (cliente avulso comum)
-      let nomeExibido = nome + " (AVULSO)"; // Sufixo para controle visual e do backend
+      let novoId = Date.now(); 
+      let nomeExibido = nome + " (AVULSO)"; 
 
-      // Cliente marcado como FIXO: grava na rota (clientes_rotas) e passa a ser um cliente normal
       if (fixo) {
         const nomeFixo = nome.toUpperCase();
         const jaExiste = bancoDadosRota.some(b => b.clientes.some(c => c.nome.replace(' (AVULSO)', '').trim().toUpperCase() === nomeFixo));
@@ -609,7 +785,7 @@
             .select('id')
             .single();
           if (error) throw error;
-          novoId = data.id; // ID real do cadastro
+          novoId = data.id;
           nomeExibido = nomeFixo;
         } catch (err) {
           console.error("Erro ao fixar cliente na rota:", err);
@@ -624,7 +800,6 @@
         status: 'pendente'
       };
 
-      // Verifica se a cidade digitada já existe na tela
       let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === cidade);
 
       if (blocoCidade) {
@@ -634,14 +809,13 @@
           cidade: cidade,
           clientes: [novoCliente]
         });
-        sanfonasAbertas[bancoDadosRota.length - 1] = true; // Abre a sanfona da nova cidade
+        sanfonasAbertas[bancoDadosRota.length - 1] = true;
       }
 
       fecharModalAvulsa();
       renderizarCidades();
-      abrirModalVenda(novoId); // Abre automaticamente a tela para finalizar a venda
+      abrirModalVenda(novoId);
     }
-    // -------------------------------
 
     function abrirModalVenda(clienteId) {
       const vendedorAtual = (document.getElementById('header-vendedor')?.innerText || '').toUpperCase();
@@ -660,16 +834,15 @@
         tituloCliente.appendChild(aviso);
       }
 
-      const chkBoleto = document.getElementById('chk-boleto');
-      const chkNota = document.getElementById('chk-nota'); 
-
-      if (chkBoleto) chkBoleto.checked = false;
-      if (chkNota) chkNota.checked = false;
+      // IMPORTANTE: LIMPAR SEMPRE OS DADOS DO CLIENTE ANTERIOR PARA NÃO SOBREPOR
+      document.getElementById('modal-pagamento').value = 'Dinheiro';
+      document.getElementById('modal-obs').value = '';
+      document.getElementById('chk-nota').checked = false;
+      document.getElementById('chk-boleto').checked = false;
 
       itensVendaTemp = {};
       PRODUTOS_CATALOGO.forEach(p => {
         let precoAplicado = p.precoPadrao;
-
         for (let nomeVend in PRECOS_ESPECIAIS_VENDEDOR) {
           if (vendedorAtual.includes(nomeVend)) {
             if (PRECOS_ESPECIAIS_VENDEDOR[nomeVend][p.id] !== undefined) {
@@ -677,14 +850,13 @@
             }
           }
         }
-
         if (clienteAtual.precosEspeciais && clienteAtual.precosEspeciais[p.id] !== undefined) {
           precoAplicado = clienteAtual.precosEspeciais[p.id];
         }
-
         itensVendaTemp[p.id] = { qtd: 0, troca: 0, preco: precoAplicado };
       });
 
+      // SE JÁ TIVER VENDA GRAVADA, ELE PREENCHE DE VOLTA COM O QUE O VENDEDOR COLOCOU
       if (clienteAtual.venda) {
         document.getElementById('modal-pagamento').value = clienteAtual.venda.pagamento;
         document.getElementById('modal-obs').value = clienteAtual.venda.obs || '';
@@ -787,7 +959,7 @@
 
       await salvarClienteAoVivo({
         vendedor: document.getElementById('header-vendedor').innerText,
-        clienteId: clienteAtual.id, // O ID avulso (Date.now()) vai para o DB perfeitamente
+        clienteId: clienteAtual.id, 
         clienteNome: clienteAtual.nome,
         cidade: cidadeCliente,
         statusAtendimento: teveVenda ? 'CONCLUIDO' : 'NAO_COMPROU',
@@ -814,7 +986,6 @@
       renderizarCidades();
     }
     
-    function resetarDadosSimulacao() { location.reload(); }
     function voltarConfig() {
       document.getElementById('step-config').classList.remove('hidden');
       document.getElementById('step-rota').classList.add('hidden');
@@ -961,7 +1132,7 @@
         return;
       }
 
-      const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O aplicativo será resetado e travado.");
+      const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O aplicativo será resetado para amanhã.");
       if (!confirmou) return;
 
       let clientesAtendidos = [];
@@ -1007,9 +1178,7 @@
       }
 
       alert("Fechamento concluído e PDF gerado com sucesso!");
-
-      localStorage.clear();
-      window.location.reload();
+      location.reload();
     }
     
     function abrirModalEstoque() {
@@ -1032,7 +1201,6 @@
     async function salvarEstoqueInicial() {
       const vendedorAtual = document.getElementById('header-vendedor').innerText;
 
-      // 330ml e 900ml: caixas x unidades por caixa + unidades soltas (sempre gravado em unidades)
       const cx330 = Number(document.getElementById('carga_330ml_cx').value) || 0;
       const un330 = Number(document.getElementById('carga_330ml_un').value) || 0;
       const cx900 = Number(document.getElementById('carga_900ml_cx').value) || 0;
@@ -1041,9 +1209,6 @@
       const total330 = totalCargaUnidades('330ml');
       const total900 = totalCargaUnidades('900ml');
 
-      // -------------------------------------------------------------
-      // FILTRO ANTI-ERROS DE DIGITAÇÃO
-      // -------------------------------------------------------------
       if (cx330 > 30) {
         alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 30 caixas para o suco de 330ml.\n\nVerifique se você não digitou unidades no campo de caixas.");
         return;
@@ -1052,20 +1217,18 @@
         alert("⚠️ ERRO: A carga de 330ml (" + total330 + " unidades) está excedendo o limite máximo de segurança (2400 unidades).");
         return;
       }
-
       if (cx900 > 40) {
-        alert("⚠️️ ERRO: Quantidade muito alta!\nO limite máximo é de 40 caixas para o suco de 900ml.\n\nVerifique se você não digitou unidades no campo de caixas.");
+        alert("⚠ ERRO: Quantidade muito alta!\nO limite máximo é de 40 caixas para o suco de 900ml.\n\nVerifique se você não digitou unidades no campo de caixas.");
         return;
       }
       if (total900 > 1000) {
         alert("⚠️ ERRO: A carga de 900ml (" + total900 + " unidades) está excedendo o limite máximo de segurança (1000 unidades).");
         return;
       }
-      // -------------------------------------------------------------
       
       const dadosEstoque = {
         vendedor_nome: vendedorAtual,
-        data_fechamento: new Date().toISOString().split('T')[0],
+        data_fechamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
         retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
         carga_330ml: total330,
         retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
@@ -1123,7 +1286,7 @@
         return;
       }
 
-      const hoje = new Date().toISOString().split('T')[0];
+      const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
       try {
         const { error } = await supabaseClient
