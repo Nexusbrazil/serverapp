@@ -939,16 +939,16 @@
         const prazoHTML = listaPrazo.length > 0
           ? listaPrazo.map(c => `
             <tr style="page-break-inside: avoid;">
-              <td style="border: 1px solid #999; padding: 5px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
-              <td style="border: 1px solid #999; padding: 5px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
-            </tr>`).join('') + `<tr style="background:#fef3c7; page-break-inside: avoid;"><td style="border: 1px solid #999; padding: 5px;"><strong>TOTAL A PRAZO (${listaPrazo.length} notinha(s))</strong></td><td style="border: 1px solid #999; padding: 5px;"><strong>R$ ${totalPrazo.toFixed(2)}</strong></td></tr>`
-          : '<tr style="page-break-inside: avoid;"><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma venda a prazo.</td></tr>';
+              <td style="border: 1px solid #000; padding: 6px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
+              <td style="border: 1px solid #000; padding: 6px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
+            </tr>`).join('') + `<tr style="background:#fef3c7; page-break-inside: avoid;"><td style="border: 1px solid #000; padding: 6px;"><strong>TOTAL A PRAZO (${listaPrazo.length} notinha(s))</strong></td><td style="border: 1px solid #000; padding: 6px;"><strong>R$ ${totalPrazo.toFixed(2)}</strong></td></tr>`
+          : '<tr style="page-break-inside: avoid;"><td colspan="2" style="border: 1px solid #000; padding: 6px; text-align:center;">Nenhuma venda a prazo.</td></tr>';
 
         const clientesHTML = (dados.clientes && dados.clientes.length > 0)
           ? dados.clientes.map(c => `
             <tr style="page-break-inside: avoid;">
-              <td style="border: 1px solid #999; padding: 5px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
-              <td style="border: 1px solid #999; padding: 5px;">
+              <td style="border: 1px solid #000; padding: 6px;"><strong>${c.clienteNome || c.nome || '-'}</strong><br><small>${c.cidade || ''}</small></td>
+              <td style="border: 1px solid #000; padding: 6px;">
                 330ml: ${c.qtd_330ml || 0}<br>
                 900ml: ${c.qtd_900ml || 0}<br>
                 Uva: ${c.qtd_uva || 0}<br>
@@ -958,87 +958,90 @@
                 ${c.qtd_gelo ? `<br>Gelo 5kg: ${c.qtd_gelo}` : ''}
                 ${c.qtd_venda_troca ? `<br><span style="color:#b91c1c;">Venda Trocas: ${c.qtd_venda_troca}</span>` : ''}
               </td>
-              <td style="border: 1px solid #999; padding: 5px;">
+              <td style="border: 1px solid #000; padding: 6px;">
                 330ml: ${c.troca_330ml || 0}<br>
                 900ml: ${c.troca_900ml || 0}<br>
                 Uva: ${c.troca_uva || 0}
               </td>
-              <td style="border: 1px solid #999; padding: 5px;">${c.formaPagamento || c.forma_pagamento || '-'}</td>
-              <td style="border: 1px solid #999; padding: 5px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
-              <td style="border: 1px solid #999; padding: 5px;">${c.observacao || '-'}</td>
+              <td style="border: 1px solid #000; padding: 6px;">${c.formaPagamento || c.forma_pagamento || '-'}</td>
+              <td style="border: 1px solid #000; padding: 6px;"><strong>R$ ${Number(c.valorTotal || c.valor_total || 0).toFixed(2)}</strong></td>
+              <td style="border: 1px solid #000; padding: 6px;">${c.observacao || '-'}</td>
             </tr>
           `).join('')
-          : '<tr style="page-break-inside: avoid;"><td colspan="6" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhum cliente registrado.</td></tr>';
+          : '<tr style="page-break-inside: avoid;"><td colspan="6" style="border: 1px solid #000; padding: 6px; text-align:center;">Nenhum cliente registrado.</td></tr>';
 
         const despesasHTML = (dados.despesas && dados.despesas.length > 0)
           ? dados.despesas.map(d => `
             <tr style="page-break-inside: avoid;">
-              <td style="border: 1px solid #999; padding: 5px;">${d.descricao || d.motivo || '-'}</td>
-              <td style="border: 1px solid #999; padding: 5px;">R$ ${Number(d.valor || 0).toFixed(2)}</td>
+              <td style="border: 1px solid #000; padding: 6px;">${d.descricao || d.motivo || '-'}</td>
+              <td style="border: 1px solid #000; padding: 6px;">R$ ${Number(d.valor || 0).toFixed(2)}</td>
             </tr>
           `).join('')
-          : '<tr style="page-break-inside: avoid;"><td colspan="2" style="border: 1px solid #999; padding: 5px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
+          : '<tr style="page-break-inside: avoid;"><td colspan="2" style="border: 1px solid #000; padding: 6px; text-align:center;">Nenhuma despesa lançada.</td></tr>';
 
-        // MONTAGEM DO ELEMENTO VISUAL
+        // CONSTRUÇÃO DO CONTAINER VISÍVEL TEMPORÁRIO
         const el = document.createElement('div');
-        el.style.position = 'absolute';
-        el.style.left = '0';
+        el.id = 'pdf-container-temp';
+        el.style.position = 'fixed';
         el.style.top = '0';
-        el.style.zIndex = '-9999';
-        el.style.width = '700px';
-        el.style.padding = '20px';
+        el.style.left = '0';
+        el.style.width = '750px';
         el.style.background = '#ffffff';
+        el.style.color = '#000000';
+        el.style.padding = '20px';
         el.style.fontFamily = 'Arial, sans-serif';
         el.style.fontSize = '12px';
-        el.style.color = '#000000';
+        el.style.zIndex = '99999';
+        el.style.opacity = '0.01'; // Fica visível para a captura sem piscar na tela do usuário
+
         el.innerHTML = `
           <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
-            <h2 style="margin: 0; text-transform: uppercase; font-size: 16px;">Comprovante de Fechamento de Rota</h2>
-            <p style="margin: 3px 0; font-size: 12px;">Distribuição de Sucos</p>
+            <h2 style="margin: 0; text-transform: uppercase; font-size: 16px; color: #000;">Comprovante de Fechamento de Rota</h2>
+            <p style="margin: 3px 0; font-size: 12px; color: #333;">Distribuição de Sucos</p>
           </div>
-          <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 8px; margin-bottom: 12px; display: flex; justify-content: space-between;">
+          <div style="background: #f8f9fa; border: 1px solid #000; padding: 8px; margin-bottom: 12px; display: flex; justify-content: space-between;">
             <span><strong>Vendedor:</strong> ${dados.vendedor || 'Não informado'}</span>
             <span><strong>Data:</strong> ${dataHoje}</span>
           </div>
           
-          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">1. Clientes Atendidos e Vendas</h3>
+          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px; color: #000;">1. Clientes Atendidos e Vendas</h3>
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 15px;">
-            <thead><tr style="background: #eee;">
-              <th style="border: 1px solid #999; padding: 5px;">Cliente</th>
-              <th style="border: 1px solid #999; padding: 5px;">Vendas</th>
-              <th style="border: 1px solid #999; padding: 5px;">Trocas</th>
-              <th style="border: 1px solid #999; padding: 5px;">Pgto</th>
-              <th style="border: 1px solid #999; padding: 5px;">Total</th>
-              <th style="border: 1px solid #999; padding: 5px;">Obs</th>
+            <thead><tr style="background: #ddd; color: #000;">
+              <th style="border: 1px solid #000; padding: 6px;">Cliente</th>
+              <th style="border: 1px solid #000; padding: 6px;">Vendas</th>
+              <th style="border: 1px solid #000; padding: 6px;">Trocas</th>
+              <th style="border: 1px solid #000; padding: 6px;">Pgto</th>
+              <th style="border: 1px solid #000; padding: 6px;">Total</th>
+              <th style="border: 1px solid #000; padding: 6px;">Obs</th>
             </tr></thead>
             <tbody>${clientesHTML}</tbody>
           </table>
 
-          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">2. Despesas da Rota</h3>
+          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px; color: #000;">2. Despesas da Rota</h3>
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 15px;">
-            <thead><tr style="background: #eee;">
-              <th style="border: 1px solid #999; padding: 5px;">Motivo</th>
-              <th style="border: 1px solid #999; padding: 5px;">Valor</th>
+            <thead><tr style="background: #ddd; color: #000;">
+              <th style="border: 1px solid #000; padding: 6px;">Motivo</th>
+              <th style="border: 1px solid #000; padding: 6px;">Valor</th>
             </tr></thead>
             <tbody>${despesasHTML}</tbody>
           </table>
 
-          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px;">3. Notinhas a Prazo (a cobrar)</h3>
+          <h3 style="border-bottom: 1px solid #000; padding-bottom: 2px; margin-top: 15px; font-size: 13px; color: #000;">3. Notinhas a Prazo (a cobrar)</h3>
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 15px;">
-            <thead><tr style="background: #eee;">
-              <th style="border: 1px solid #999; padding: 5px;">Cliente</th>
-              <th style="border: 1px solid #999; padding: 5px;">Valor</th>
+            <thead><tr style="background: #ddd; color: #000;">
+              <th style="border: 1px solid #000; padding: 6px;">Cliente</th>
+              <th style="border: 1px solid #000; padding: 6px;">Valor</th>
             </tr></thead>
             <tbody>${prazoHTML}</tbody>
           </table>
 
-          <div style="margin-top: 20px; border: 2px solid #000; padding: 12px; page-break-inside: avoid; background-color: #fafafa;">
+          <div style="margin-top: 20px; border: 2px solid #000; padding: 12px; page-break-inside: avoid; background-color: #fcfcfc;">
             <p style="margin: 4px 0;"><strong>Total Bruto de Vendas:</strong> R$ ${totalVendas.toFixed(2)}</p>
             <p style="margin: 4px 0;">• Total PIX: R$ ${totalPix.toFixed(2)} | • Total Dinheiro: R$ ${totalDinheiro.toFixed(2)}</p>
             <p style="margin: 4px 0; color:#b45309;"><strong>• Total A Prazo (notinhas a cobrar): R$ ${totalPrazo.toFixed(2)}</strong></p>
             <p style="margin: 4px 0;"><strong>Total Despesas:</strong> R$ ${totalDespesas.toFixed(2)}</p>
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #000;">
-            <p style="margin: 4px 0; font-size: 14px;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
+            <p style="margin: 4px 0; font-size: 14px; color: #000;"><strong>Valor Líquido em Mão:</strong> R$ ${valorLiquidoDinheiro.toFixed(2)}</p>
           </div>
         `;
 
@@ -1051,23 +1054,25 @@
           margin: [0.3, 0.3, 0.3, 0.3],
           filename: nomeArquivo,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, logging: false, useCORS: true, windowWidth: 750, scrollY: 0 },
+          html2canvas: { scale: 2, logging: false, useCORS: true, backgroundColor: '#ffffff' },
           jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        // Pequena pausa para o navegador montar o DOM antes da foto/PDF
+        // Garante 500ms para renderizar as fontes antes de gerar a imagem do PDF
         setTimeout(() => {
           html2pdf().set(opcoes).from(el).save()
             .then(() => {
-              if (el.parentNode) el.parentNode.removeChild(el);
+              const domEl = document.getElementById('pdf-container-temp');
+              if (domEl) domEl.remove();
               resolve();
             })
             .catch((err) => {
-              if (el.parentNode) el.parentNode.removeChild(el);
+              const domEl = document.getElementById('pdf-container-temp');
+              if (domEl) domEl.remove();
               reject(err);
             });
-        }, 300);
+        }, 500);
       });
     }
     
