@@ -9,8 +9,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style> body { touch-action: manipulation; -webkit-tap-highlight-color: transparent; } </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-24 select-none">
 
@@ -919,7 +917,7 @@
     }
 
     function baixarRelatorioFechamento(dados) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const dataHoje = new Date().toLocaleDateString('pt-BR');
 
         let totalVendas = 0, totalDinheiro = 0, totalPix = 0, totalPrazo = 0;
@@ -992,7 +990,7 @@
         el.style.fontFamily = 'Arial, sans-serif';
         el.style.fontSize = '12px';
         el.style.zIndex = '99999';
-        el.style.opacity = '0.01'; // Fica visível para a captura sem piscar na tela do usuário
+        el.style.opacity = '0'; // invisível na tela principal, só usado para montar o HTML
 
         el.innerHTML = `
           <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px;">
@@ -1045,34 +1043,45 @@
           </div>
         `;
 
-        document.body.appendChild(el);
-
-        const nomeVendedorSanitizado = (dados.vendedor || 'vendedor').toLowerCase().replace(/\s+/g, '_');
-        const nomeArquivo = `fechamento_${nomeVendedorSanitizado}_${dataHoje.replace(/\//g, '-')}.pdf`;
-
-        const opcoes = {
-          margin: [0.3, 0.3, 0.3, 0.3],
-          filename: nomeArquivo,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, logging: false, useCORS: true, backgroundColor: '#ffffff' },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        // Garante 500ms para renderizar as fontes antes de gerar a imagem do PDF
-        setTimeout(() => {
-          html2pdf().set(opcoes).from(el).save()
-            .then(() => {
-              const domEl = document.getElementById('pdf-container-temp');
-              if (domEl) domEl.remove();
-              resolve();
-            })
-            .catch((err) => {
-              const domEl = document.getElementById('pdf-container-temp');
-              if (domEl) domEl.remove();
-              reject(err);
-            });
-        }, 500);
+        // Abre janela de impressão — funciona em todos os browsers e não fica em branco
+        const nomeVendedor = (dados.vendedor || 'vendedor');
+        const win = window.open('', '_blank', 'width=800,height=900');
+        if (!win) {
+          alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.');
+          resolve();
+          return;
+        }
+        win.document.write(`<!DOCTYPE html><html><head>
+          <meta charset="utf-8">
+          <title>Fechamento ${nomeVendedor} - ${dataHoje}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #000; background: #fff; padding: 20px; }
+            h2 { font-size: 16px; text-transform: uppercase; text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
+            h3 { font-size: 13px; border-bottom: 1px solid #000; padding-bottom: 2px; margin: 16px 0 6px; }
+            .cabecalho { background: #f0f0f0; border: 1px solid #000; padding: 8px; display: flex; justify-content: space-between; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 14px; }
+            th { background: #ddd; border: 1px solid #000; padding: 6px; text-align: left; }
+            td { border: 1px solid #000; padding: 6px; vertical-align: top; }
+            tr { page-break-inside: avoid; }
+            .resumo { border: 2px solid #000; padding: 12px; page-break-inside: avoid; background: #fcfcfc; margin-top: 16px; }
+            .resumo p { margin: 4px 0; }
+            .resumo hr { margin: 8px 0; border: 0; border-top: 1px solid #000; }
+            .prazo { color: #b45309; }
+            .liquido { font-size: 14px; }
+            .troca-row { color: #b91c1c; }
+            @media print {
+              body { padding: 10px; }
+              button { display: none !important; }
+            }
+          </style>
+        </head><body>${el.innerHTML}
+          <div style="text-align:center; margin-top:24px;">
+            <button onclick="window.print()" style="background:#1e3a5f;color:#fff;font-weight:bold;padding:10px 28px;border:none;border-radius:8px;font-size:14px;cursor:pointer;">🖨️ Imprimir / Salvar como PDF</button>
+          </div>
+        </body></html>`);
+        win.document.close();
+        resolve();
       });
     }
     
