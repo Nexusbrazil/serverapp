@@ -389,14 +389,14 @@
         
         // Unifica os nomes removendo espaços extras e eliminando todas as duplicadas
         const rotasUnicas = [...new Set(
-          rotas.map(r => String(r || '').trim().toUpperCase())
+          rotas.map(r => String(r || '').trim().toLowerCase())
         )].filter(Boolean);
 
         selectRota.innerHTML = '<option value="">-- Selecione a Rota / Dia --</option>';
         rotasUnicas.forEach(r => {
           const opt = document.createElement('option'); 
-          opt.value = r; 
-          opt.textContent = r;
+          opt.value = r; // Envia em minúsculo para a API (ex: quinta-feira)
+          opt.textContent = r.toUpperCase(); // Mostra em maiúsculo na tela
           selectRota.appendChild(opt);
         });
       } catch (e) {
@@ -471,7 +471,7 @@
       if (!vend || !rotaSel) { alert('Selecione o vendedor e a rota/dia!'); return; }
 
       try {
-        const res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&dia_semana=${encodeURIComponent(rotaSel)}`);
+        const res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&dia_semana=${encodeURIComponent(rotaSel.toLowerCase())}`);
         bancoDadosRota = await res.json();
 
         if (!bancoDadosRota || bancoDadosRota.length === 0) {
