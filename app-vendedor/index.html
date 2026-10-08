@@ -465,121 +465,125 @@
     }
 
     async function iniciarRota() {
-      const vend = document.getElementById('select-vendedor').value;
-      const rotaSel = document.getElementById('select-rota').value;
+  const vend = document.getElementById('select-vendedor').value;
+  const rotaSel = (document.getElementById('select-rota').value || '').toLowerCase().trim();
 
-      if (!vend || !rotaSel) { alert('Selecione o vendedor e a rota/dia!'); return; }
+  if (!vend || !rotaSel) { 
+    alert('Selecione o vendedor e a rota/dia!'); 
+    return; 
+  }
 
-      try {
-        const res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&dia_semana=${encodeURIComponent(rotaSel.toLowerCase())}`);
-        bancoDadosRota = await res.json();
+  try {
+    // Garante dia_semana sempre em minúsculas
+    const res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&dia_semana=${encodeURIComponent(rotaSel)}`);
+    bancoDadosRota = await res.json();
 
-        if (!bancoDadosRota || bancoDadosRota.length === 0) {
-          alert('Nenhum cliente encontrado para essa rota!');
-          return;
-        }
+    if (!bancoDadosRota || bancoDadosRota.length === 0) {
+      alert('Nenhum cliente encontrado para essa rota!');
+      return;
+    }
 
-        document.getElementById('header-vendedor').innerText = vend;
-        document.getElementById('header-rota').innerText = rotaSel;
+    document.getElementById('header-vendedor').innerText = vend;
+    document.getElementById('header-rota').innerText = rotaSel.toUpperCase();
 
-        const progressoHoje = await carregarProgressoDoDia(vend);
-        let estoquePreenchido = false;
-        const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    const progressoHoje = await carregarProgressoDoDia(vend);
+    let estoquePreenchido = false;
+    const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
-        progressoHoje.forEach(p => {
-          if (p.data_fechamento === hojeLocal && (p.carga_330ml != null || p.carga_900ml != null)) {
-            estoquePreenchido = true;
-            document.getElementById('despesa_combustivel').value = p.despesa_combustivel || '';
-            document.getElementById('despesa_almoco').value = p.despesa_almoco || '';
-            document.getElementById('despesa_outras_valor').value = p.despesa_outras_valor || '';
-            document.getElementById('despesa_outras_obs').value = p.despesa_outras_obs || '';
-            despesasSalvasAssinatura = lerDespesasDigitadas().assinatura;
-          }
+    progressoHoje.forEach(p => {
+      if (p.data_fechamento === hojeLocal && (p.carga_330ml != null || p.carga_900ml != null)) {
+        estoquePreenchido = true;
+        document.getElementById('despesa_combustivel').value = p.despesa_combustivel || '';
+        document.getElementById('despesa_almoco').value = p.despesa_almoco || '';
+        document.getElementById('despesa_outras_valor').value = p.despesa_outras_valor || '';
+        document.getElementById('despesa_outras_obs').value = p.despesa_outras_obs || '';
+        despesasSalvasAssinatura = lerDespesasDigitadas().assinatura;
+      }
 
-          if (p.cliente_id) {
-            let clienteAchado = false;
-            bancoDadosRota.forEach(bloco => {
-              let cli = bloco.clientes.find(c => String(c.id) === String(p.cliente_id));
-              if (cli) {
-                clienteAchado = true;
-                cli.data_atendimento_banco = p.data_atendimento;
-                if (p.status === 'CONCLUIDO') {
-                  cli.status = 'vendido';
-                  cli.venda = {
-                    total: Number(p.valor_total || 0),
-                    pagamento: p.forma_pagamento || 'Dinheiro',
-                    obs: p.observacao || '',
-                    precisaNota: String(p.solicitacao_documento).includes('NOTA'),
-                    precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
-                    itens: {
-                      '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
-                      '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
-                      'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
-                      'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
-                      'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
-                      'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
-                      'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
-                      'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
-                    }
-                  };
-                } else if (p.status === 'NAO_COMPROU') {
-                  cli.status = 'nao_comprou';
+      if (p.cliente_id) {
+        let clienteAchado = false;
+        bancoDadosRota.forEach(bloco => {
+          let cli = bloco.clientes.find(c => String(c.id) === String(p.cliente_id));
+          if (cli) {
+            clienteAchado = true;
+            cli.data_atendimento_banco = p.data_atendimento;
+            if (p.status === 'CONCLUIDO') {
+              cli.status = 'vendido';
+              cli.venda = {
+                total: Number(p.valor_total || 0),
+                pagamento: p.forma_pagamento || 'Dinheiro',
+                obs: p.observacao || '',
+                precisaNota: String(p.solicitacao_documento).includes('NOTA'),
+                precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
+                itens: {
+                  '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
+                  '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
+                  'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
+                  'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
+                  'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
+                  'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
+                  'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
+                  'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
                 }
-              }
-            });
-
-            if (!clienteAchado) {
-              let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === (p.cidade || 'AVULSOS').toUpperCase());
-              let newCli = {
-                id: p.cliente_id,
-                nome: p.cliente_nome,
-                data_atendimento_banco: p.data_atendimento,
-                status: p.status === 'CONCLUIDO' ? 'vendido' : (p.status === 'NAO_COMPROU' ? 'nao_comprou' : 'pendente')
               };
-              if (p.status === 'CONCLUIDO') {
-                newCli.venda = {
-                  total: Number(p.valor_total || 0),
-                  pagamento: p.forma_pagamento || 'Dinheiro',
-                  obs: p.observacao || '',
-                  precisaNota: String(p.solicitacao_documento).includes('NOTA'),
-                  precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
-                  itens: {
-                      '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
-                      '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
-                      'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
-                      'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
-                      'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
-                      'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
-                      'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
-                      'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
-                  }
-                };
-              }
-              if (blocoCidade) {
-                blocoCidade.clientes.push(newCli);
-              } else {
-                bancoDadosRota.push({ cidade: p.cidade || 'AVULSOS', clientes: [newCli] });
-              }
+            } else if (p.status === 'NAO_COMPROU') {
+              cli.status = 'nao_comprou';
             }
           }
         });
 
-        await carregarNotinhasEmAberto(vend);
-
-        document.getElementById('step-config').classList.add('hidden');
-
-        if (estoquePreenchido) {
-          document.getElementById('step-rota').classList.remove('hidden');
-          document.getElementById('box-fechamento').classList.remove('hidden');
-          renderizarCidades();
-        } else {
-          abrirModalEstoque();
+        if (!clienteAchado) {
+          let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === (p.cidade || 'AVULSOS').toUpperCase());
+          let newCli = {
+            id: p.cliente_id,
+            nome: p.cliente_nome,
+            data_atendimento_banco: p.data_atendimento,
+            status: p.status === 'CONCLUIDO' ? 'vendido' : (p.status === 'NAO_COMPROU' ? 'nao_comprou' : 'pendente')
+          };
+          if (p.status === 'CONCLUIDO') {
+            newCli.venda = {
+              total: Number(p.valor_total || 0),
+              pagamento: p.forma_pagamento || 'Dinheiro',
+              obs: p.observacao || '',
+              precisaNota: String(p.solicitacao_documento).includes('NOTA'),
+              precisaBoleto: String(p.solicitacao_documento).includes('BOLETO'),
+              itens: {
+                  '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
+                  '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
+                  'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
+                  'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
+                  'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
+                  'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
+                  'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
+                  'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
+              }
+            };
+          }
+          if (blocoCidade) {
+            blocoCidade.clientes.push(newCli);
+          } else {
+            bancoDadosRota.push({ cidade: p.cidade || 'AVULSOS', clientes: [newCli] });
+          }
         }
-        
-      } catch (e) {
-        alert("Erro ao buscar rota do servidor: " + e.message);
       }
+    });
+
+    await carregarNotinhasEmAberto(vend);
+
+    document.getElementById('step-config').classList.add('hidden');
+
+    if (estoquePreenchido) {
+      document.getElementById('step-rota').classList.remove('hidden');
+      document.getElementById('box-fechamento').classList.remove('hidden');
+      renderizarCidades();
+    } else {
+      abrirModalEstoque();
     }
+    
+  } catch (e) {
+    alert("Erro ao buscar rota do servidor: " + e.message);
+  }
+}
 
     function lerDespesasDigitadas() {
       const comb = parseFloat(document.getElementById('despesa_combustivel').value) || 0;
