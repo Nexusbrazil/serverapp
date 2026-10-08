@@ -381,9 +381,17 @@
       try {
         const res = await fetch(`${URL_API}/vendedores-cidades?vendedor=${encodeURIComponent(vendedor)}`);
         const rotas = await res.json();
+        
+        // Unifica os nomes removendo espaços extras e eliminando todas as duplicadas
+        const rotasUnicas = [...new Set(
+          rotas.map(r => String(r || '').trim().toUpperCase())
+        )].filter(Boolean);
+
         selectRota.innerHTML = '<option value="">-- Selecione a Rota / Dia --</option>';
-        rotas.forEach(r => {
-          const opt = document.createElement('option'); opt.value = r; opt.textContent = r;
+        rotasUnicas.forEach(r => {
+          const opt = document.createElement('option'); 
+          opt.value = r; 
+          opt.textContent = r;
           selectRota.appendChild(opt);
         });
       } catch (e) {
