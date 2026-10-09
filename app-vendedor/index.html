@@ -410,20 +410,39 @@
     async function carregarNotinhasEmAberto(vend) {
       try {
         const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        
+        // 1. CORREÇÃO: Adicionado 'forma_pagamento', 'data_atendimento' e 'data_fechamento' no select
         const [rv, rb] = await Promise.all([
-          supabaseClient.from('fechamentos').select('cliente_nome,valor_total,status,created_at,qtd_330ml,qtd_900ml,qtd_uva,qtd_agua_sg,qtd_agua_cg')
-            .ilike('vendedor_nome', vend).neq('status', 'EXCLUIDO').limit(3000),
-          supabaseClient.from('notinhas_baixas').select('cliente_nome,data_venda,valor').ilike('vendedor_nome', vend).limit(3000)
+          supabaseClient.from('fechamentos')
+            .select('cliente_nome,valor_total,status,forma_pagamento,created_at,data_atendimento,data_fechamento,qtd_330ml,qtd_900ml,qtd_uva,qtd_agua_sg,qtd_agua_cg')
+            .ilike('vendedor_nome', vend)
+            .neq('status', 'EXCLUIDO')
+            .limit(3000),
+          supabaseClient.from('notinhas_baixas')
+            .select('cliente_nome,data_venda,valor')
+            .ilike('vendedor_nome', vend)
+            .limit(3000)
         ]);
         if (rv.error || rb.error) throw (rv.error || rb.error);
 
-        const diaDe = r => new Date(r.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        // Tratamento seguro da data da venda
+        const diaDe = r => {
+          const raw = r.data_atendimento || r.data_fechamento || r.created_at;
+          if (!raw) return '';
+          return raw.includes('T') 
+            ? new Date(raw).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+            : raw.slice(0, 10);
+        };
+
         const grupos = {}; 
         (rv.data || []).forEach(r => {
           const valor = Number(r.valor_total || 0);
           const d = diaDe(r);
           const pgto = String(r.forma_pagamento || '').toUpperCase();
-          if (valor <= 0 || d === hoje || pgto.includes('DINHEIRO') || pgto.includes('PIX')) return;
+
+          // 2. CORREÇÃO: Pula vendas zeradas, sem data, do dia atual e pagas à vista (Dinheiro/PIX)
+          if (valor <= 0 || !d || d === hoje || pgto.includes('DINHEIRO') || pgto.includes('PIX')) return;
+
           const nome = normNomeCliente(r.cliente_nome);
           const g = grupos[nome + '|' + d] = grupos[nome + '|' + d] || { nome, dia: d, vals: {}, quitada: false };
           g.vals[[r.qtd_330ml, r.qtd_900ml, r.qtd_uva, r.qtd_agua_sg, r.qtd_agua_cg].map(v => Number(v || 0)).join('|') + '|' + valor.toFixed(2)] = valor;
@@ -455,6 +474,8 @@
         if (lista.length === 0) { el.classList.add('hidden'); return; }
         lista.sort((a, b) => a.maisAntiga.localeCompare(b.maisAntiga));
         const fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
+        
+        // 3. CORREÇÃO: Ajustado espaço no "(desde DD/MM)"
         el.innerHTML = `<details open><summary class="font-black text-red-800 text-sm cursor-pointer">🔔 ${lista.length} cliente(s) com notinha/boleto a prazo em aberto · ${fmtMoeda(soma)}</summary>
           <ul class="mt-2 space-y-1 text-xs text-red-900">${lista.map(c => `<li>• <strong>${escHtml(c.nome)}</strong> — ${fmtMoeda(c.total)} (desde${fmtD(c.maisAntiga)})</li>`).join('')}</ul>
           <p class="text-[11px] mt-2 text-red-700">Lembre de cobrar quando passar no cliente.</p></details>`;
