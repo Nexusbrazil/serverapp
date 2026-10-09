@@ -495,29 +495,45 @@
       }
     }
     function pedirSenha() {
-      const vend = document.getElementById('select-vendedor').value;
-      const rotaSel = document.getElementById('select-rota').value;
-      
-      if (!vend || !rotaSel) { 
-        alert('Selecione o vendedor e a rota/dia primeiro!'); 
-        return; 
+      try {
+        const selectV = document.getElementById('select-vendedor');
+        const selectR = document.getElementById('select-rota');
+        
+        const vend = selectV ? selectV.value : '';
+        const rotaSel = selectR ? selectR.value : '';
+        
+        if (!vend || !rotaSel) { 
+          alert('Por favor, selecione o Vendedor e a Rota/Dia antes de continuar!'); 
+          return; 
+        }
+        
+        const elNome = document.getElementById('senha-vendedor-nome');
+        if (elNome) elNome.innerText = vend;
+        
+        const inputSenha = document.getElementById('input-senha-vendedor');
+        if (inputSenha) inputSenha.value = '';
+        
+        const modal = document.getElementById('modal-senha');
+        if (modal) {
+          modal.classList.remove('hidden');
+          setTimeout(() => { if (inputSenha) inputSenha.focus(); }, 150);
+        } else {
+          alert('Erro interno: O modal de senha (id="modal-senha") não foi encontrado no HTML.');
+        }
+      } catch (e) {
+        alert('Erro ao abrir tela de senha: ' + e.message);
       }
-      
-      document.getElementById('senha-vendedor-nome').innerText = vend;
-      document.getElementById('input-senha-vendedor').value = '';
-      document.getElementById('modal-senha').classList.remove('hidden');
-      
-      // Foca automaticamente no input de senha
-      setTimeout(() => document.getElementById('input-senha-vendedor').focus(), 100);
     }
 
     function fecharModalSenha() {
-      document.getElementById('modal-senha').classList.add('hidden');
+      const modal = document.getElementById('modal-senha');
+      if (modal) modal.classList.add('hidden');
     }
 
     async function verificarSenha() {
       const vend = document.getElementById('select-vendedor').value;
-      const senhaDigitada = document.getElementById('input-senha-vendedor').value.trim();
+      const input = document.getElementById('input-senha-vendedor');
+      const senhaDigitada = input ? input.value.trim() : '';
       const btn = document.getElementById('btn-confirmar-senha');
 
       if (!senhaDigitada) {
@@ -525,48 +541,39 @@
         return;
       }
 
-      btn.innerText = "Aguarde...";
-      btn.disabled = true;
+      if (btn) { btn.innerText = "Aguarde..."; btn.disabled = true; }
 
       try {
-        // Busca a senha do vendedor no Supabase
         const { data, error } = await supabaseClient
           .from('vendedores_senhas')
           .select('senha')
           .ilike('vendedor_nome', vend)
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') { 
-          throw error; // Erro de conexão
-        }
+        if (error) throw error;
 
         const senhaBanco = data ? data.senha : null;
 
         if (!senhaBanco) {
-          alert(`Nenhuma senha cadastrada para o vendedor ${vend} no painel. Cadastre a senha primeiro no escritório.`);
-          btn.innerText = "Confirmar";
-          btn.disabled = false;
+          alert(`Nenhuma senha cadastrada para o vendedor "${vend}". Cadastre a senha no banco/painel antes de continuar.`);
+          if (btn) { btn.innerText = "Confirmar"; btn.disabled = false; }
           return;
         }
 
-        if (senhaDigitada === senhaBanco) {
-          // Senha correta! Esconde o modal e roda a função original de iniciar a rota
+        if (String(senhaDigitada) === String(senhaBanco)) {
           fecharModalSenha();
-          btn.innerText = "Confirmar";
-          btn.disabled = false;
+          if (btn) { btn.innerText = "Confirmar"; btn.disabled = false; }
+          // Executa a função original de iniciar rota normalmente
           iniciarRota(); 
         } else {
           alert('❌ Senha incorreta! Tente novamente.');
-          btn.innerText = "Confirmar";
-          btn.disabled = false;
-          document.getElementById('input-senha-vendedor').value = '';
-          document.getElementById('input-senha-vendedor').focus();
+          if (btn) { btn.innerText = "Confirmar"; btn.disabled = false; }
+          if (input) { input.value = ''; input.focus(); }
         }
       } catch (err) {
         console.error("Erro ao verificar senha:", err);
-        alert("Erro de conexão ao verificar a senha. Tente novamente.");
-        btn.innerText = "Confirmar";
-        btn.disabled = false;
+        alert("Erro ao conectar com o banco de dados: " + (err.message || err));
+        if (btn) { btn.innerText = "Confirmar"; btn.disabled = false; }
       }
     }
 
