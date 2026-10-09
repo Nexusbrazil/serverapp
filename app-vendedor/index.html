@@ -42,7 +42,7 @@
         </select>
       </div>
 
-      <button onclick="iniciarRota()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
+      <button onclick="pedirSenha()" class="w-full bg-blue-600 active:bg-blue-800 text-white font-bold p-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
         <span id="btn-iniciar-txt">INICIAR ATENDIMENTOS →</span>
       </button>
     </div>
@@ -246,7 +246,17 @@
         <button onclick="salvarVenda(false)" class="bg-red-100 text-red-700 font-bold p-3.5 rounded-xl text-sm">Não Comprou</button>
         <button onclick="salvarVenda(true)" class="bg-green-600 text-white font-bold p-3.5 rounded-xl text-sm shadow-md">Salvar Venda</button>
       </div>
-
+      <div id="modal-senha" class="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 text-center">
+      <h2 class="text-xl font-bold text-slate-800 mb-1">🔐 Acesso Restrito</h2>
+      <p class="text-xs text-slate-500 mb-4">Insira a senha de <span id="senha-vendedor-nome" class="font-bold text-blue-700"></span> para continuar.</p>
+      
+      <input type="password" id="input-senha-vendedor" placeholder="••••" class="w-full p-4 border-2 border-gray-300 rounded-xl mb-4 text-center text-2xl tracking-[0.5em] font-bold text-slate-800 focus:outline-none focus:border-blue-500" inputmode="numeric">
+      
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="fecharModalSenha()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold p-3 rounded-xl text-sm transition">Cancelar</button>
+        <button onclick="verificarSenha()" id="btn-confirmar-senha" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl text-sm shadow-md transition">Confirmar</button>
+      </div>
     </div>
   </div>
 
@@ -482,6 +492,81 @@
         el.classList.remove('hidden');
       } catch (err) {
         console.error('Erro ao buscar notinhas em aberto:', err);
+      }
+    }
+    function pedirSenha() {
+      const vend = document.getElementById('select-vendedor').value;
+      const rotaSel = document.getElementById('select-rota').value;
+      
+      if (!vend || !rotaSel) { 
+        alert('Selecione o vendedor e a rota/dia primeiro!'); 
+        return; 
+      }
+      
+      document.getElementById('senha-vendedor-nome').innerText = vend;
+      document.getElementById('input-senha-vendedor').value = '';
+      document.getElementById('modal-senha').classList.remove('hidden');
+      
+      // Foca automaticamente no input de senha
+      setTimeout(() => document.getElementById('input-senha-vendedor').focus(), 100);
+    }
+
+    function fecharModalSenha() {
+      document.getElementById('modal-senha').classList.add('hidden');
+    }
+
+    async function verificarSenha() {
+      const vend = document.getElementById('select-vendedor').value;
+      const senhaDigitada = document.getElementById('input-senha-vendedor').value.trim();
+      const btn = document.getElementById('btn-confirmar-senha');
+
+      if (!senhaDigitada) {
+        alert('Por favor, digite a senha!');
+        return;
+      }
+
+      btn.innerText = "Aguarde...";
+      btn.disabled = true;
+
+      try {
+        // Busca a senha do vendedor no Supabase
+        const { data, error } = await supabaseClient
+          .from('vendedores_senhas')
+          .select('senha')
+          .ilike('vendedor_nome', vend)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { 
+          throw error; // Erro de conexão
+        }
+
+        const senhaBanco = data ? data.senha : null;
+
+        if (!senhaBanco) {
+          alert(`Nenhuma senha cadastrada para o vendedor ${vend} no painel. Cadastre a senha primeiro no escritório.`);
+          btn.innerText = "Confirmar";
+          btn.disabled = false;
+          return;
+        }
+
+        if (senhaDigitada === senhaBanco) {
+          // Senha correta! Esconde o modal e roda a função original de iniciar a rota
+          fecharModalSenha();
+          btn.innerText = "Confirmar";
+          btn.disabled = false;
+          iniciarRota(); 
+        } else {
+          alert('❌ Senha incorreta! Tente novamente.');
+          btn.innerText = "Confirmar";
+          btn.disabled = false;
+          document.getElementById('input-senha-vendedor').value = '';
+          document.getElementById('input-senha-vendedor').focus();
+        }
+      } catch (err) {
+        console.error("Erro ao verificar senha:", err);
+        alert("Erro de conexão ao verificar a senha. Tente novamente.");
+        btn.innerText = "Confirmar";
+        btn.disabled = false;
       }
     }
 
