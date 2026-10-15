@@ -263,6 +263,44 @@
     </div>
   </div>
 
+  <!-- MODAL DE CONFERÊNCIA E CONTAGEM FINAL DE ESTOQUE NO FECHAMENTO -->
+<div id="modalConferenciaFinal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-50 p-3">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-5 max-h-[92vh] overflow-y-auto border border-slate-200 space-y-4">
+    <div class="border-b border-slate-200 pb-2.5 flex justify-between items-start">
+      <div>
+        <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
+          <span>📦</span> Conferência Final de Retorno
+        </h2>
+        <p class="text-xs text-slate-500 font-medium">Contagem física do que sobrou no caminhão para fechar o dia.</p>
+      </div>
+      <button onclick="fecharModalConferenciaFinal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+    </div>
+
+    <!-- TABELA DE PRODUTOS E CONTAGEM -->
+    <div class="space-y-3">
+      <div id="lista-conferencia-produtos" class="space-y-2">
+        <!-- Linhas dos produtos inseridas via JS -->
+      </div>
+    </div>
+
+    <!-- RESUMO DE SOBRA / FALTA GERAL -->
+    <div id="card-resultado-estoque" class="p-3.5 rounded-xl border-2 text-center space-y-1 bg-slate-50 border-slate-300">
+      <span class="text-xs font-bold text-slate-500 uppercase">Resultado do Estoque</span>
+      <div id="lbl-resultado-status" class="text-lg font-black text-slate-800">R$ 0,00</div>
+      <p id="lbl-resultado-sub" class="text-[11px] text-slate-500">Digite a contagem dos produtos acima.</p>
+    </div>
+
+    <div class="flex gap-2 pt-2 border-t border-slate-200">
+      <button type="button" onclick="fecharModalConferenciaFinal()" class="w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-xs">
+        Cancelar
+      </button>
+      <button type="button" onclick="confirmarEGravarFechamentoFinal()" class="w-2/3 bg-blue-900 hover:bg-blue-950 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+        <span>✅</span> Confirmar & Concluir Fechamento
+      </button>
+    </div>
+  </div>
+</div>
+
   <script>
     const SUPABASE_URL = "https://podnijlrofkhcbbqliem.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
@@ -419,83 +457,136 @@
     function normNomeCliente(t) { return String(t || '').replace(/\(AVULSO\)/i, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
     function escHtml(t) { return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-    async function carregarNotinhasEmAberto(vend) {
-      try {
-        const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-        
-        // 1. CORREÇÃO: Adicionado 'forma_pagamento', 'data_atendimento' e 'data_fechamento' no select
-        const [rv, rb] = await Promise.all([
-          supabaseClient.from('fechamentos')
-            .select('cliente_nome,valor_total,status,forma_pagamento,created_at,data_atendimento,data_fechamento,qtd_330ml,qtd_900ml,qtd_uva,qtd_agua_sg,qtd_agua_cg')
-            .ilike('vendedor_nome', vend)
-            .neq('status', 'EXCLUIDO')
-            .limit(3000),
-          supabaseClient.from('notinhas_baixas')
-            .select('cliente_nome,data_venda,valor')
-            .ilike('vendedor_nome', vend)
-            .limit(3000)
-        ]);
-        if (rv.error || rb.error) throw (rv.error || rb.error);
+    let recebimentosNotinhasDoDia = []; // Guarda os recebimentos feitos no dia atual para o acerto
 
-        // Tratamento seguro da data da venda
-        const diaDe = r => {
-          const raw = r.data_atendimento || r.data_fechamento || r.created_at;
-          if (!raw) return '';
-          return raw.includes('T') 
-            ? new Date(raw).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
-            : raw.slice(0, 10);
-        };
+async function carregarNotinhasEmAberto(vend) {
+  try {
+    const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+    
+    const [rv, rb] = await Promise.all([
+      supabaseClient.from('fechamentos')
+        .select('id, cliente_nome, valor_total, status, forma_pagamento, created_at, data_atendimento, data_fechamento, cidade')
+        .ilike('vendedor_nome', vend)
+        .neq('status', 'EXCLUIDO')
+        .limit(4000),
+      supabaseClient.from('notinhas_baixas')
+        .select('cliente_nome, data_venda, valor, data_pagamento, forma')
+        .ilike('vendedor_nome', vend)
+        .limit(4000)
+    ]);
 
-        const grupos = {}; 
-        (rv.data || []).forEach(r => {
-          const valor = Number(r.valor_total || 0);
-          const d = diaDe(r);
-          const pgto = String(r.forma_pagamento || '').toUpperCase();
+    if (rv.error || rb.error) throw (rv.error || rb.error);
 
-          // 2. CORREÇÃO: Pula vendas zeradas, sem data, do dia atual e pagas à vista (Dinheiro/PIX)
-          if (valor <= 0 || !d || d === hoje || pgto.includes('DINHEIRO') || pgto.includes('PIX')) return;
+    // Identifica recebimentos feitos HOJE pelo vendedor para somar no acerto
+    recebimentosNotinhasDoDia = (rb.data || []).filter(b => b.data_pagamento === hoje);
 
-          const nome = normNomeCliente(r.cliente_nome);
-          const g = grupos[nome + '|' + d] = grupos[nome + '|' + d] || { nome, dia: d, vals: {}, quitada: false };
-          g.vals[[r.qtd_330ml, r.qtd_900ml, r.qtd_uva, r.qtd_agua_sg, r.qtd_agua_cg].map(v => Number(v || 0)).join('|') + '|' + valor.toFixed(2)] = valor;
-          if (String(r.status || '').toUpperCase() === 'PAGO') g.quitada = true;
-        });
+    const diaDe = r => {
+      const raw = r.data_fechamento || r.data_atendimento || r.created_at;
+      if (!raw) return '';
+      return raw.includes('T') 
+        ? new Date(raw).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
+        : raw.slice(0, 10);
+    };
 
-        const pagoPorChave = {};
-        (rb.data || []).forEach(b => { const k = normNomeCliente(b.cliente_nome) + '|' + b.data_venda; pagoPorChave[k] = (pagoPorChave[k] || 0) + Number(b.valor || 0); });
+    // 1. Agrupa todas as vendas a prazo por cliente + data da venda (Array para não sobrescrever)
+    const dividasPorClienteData = {};
+    (rv.data || []).forEach(r => {
+      const valor = Number(r.valor_total || 0);
+      const d = diaDe(r);
+      const pgto = String(r.forma_pagamento || '').toUpperCase();
 
-        const porCliente = {};
-        Object.keys(grupos).forEach(k => {
-          const g = grupos[k];
-          if (g.quitada) return;
-          const falta = Object.values(g.vals).reduce((a, b) => a + b, 0) - (pagoPorChave[k] || 0);
-          if (falta < 0.01) return;
-          const c = porCliente[g.nome] = porCliente[g.nome] || { total: 0, qtd: 0, maisAntiga: g.dia };
-          c.total += falta; c.qtd++;
-          if (g.dia < c.maisAntiga) c.maisAntiga = g.dia;
-        });
+      // Considera apenas vendas a prazo que não sejam do dia de hoje
+      const ehPrazo = pgto.includes('PRAZO') || pgto.includes('NOTA') || pgto.includes('BOLETO');
+      if (valor <= 0 || !d || d === hoje || !ehPrazo || pgto.includes('DINHEIRO') || pgto.includes('PIX')) return;
 
-        const lista = []; let soma = 0;
-        bancoDadosRota.forEach(b => b.clientes.forEach(c => {
-          const d = porCliente[normNomeCliente(c.nome)];
-          if (d) { c.devendo = d; soma += d.total; lista.push({ nome: c.nome, ...d }); }
-        }));
-
-        const el = document.getElementById('banner-notinhas');
-        if (!el) return;
-        if (lista.length === 0) { el.classList.add('hidden'); return; }
-        lista.sort((a, b) => a.maisAntiga.localeCompare(b.maisAntiga));
-        const fmtD = d => d.split('-').reverse().slice(0, 2).join('/');
-        
-        // 3. CORREÇÃO: Ajustado espaço no "(desde DD/MM)"
-        el.innerHTML = `<details open><summary class="font-black text-red-800 text-sm cursor-pointer">🔔 ${lista.length} cliente(s) com notinha/boleto a prazo em aberto · ${fmtMoeda(soma)}</summary>
-          <ul class="mt-2 space-y-1 text-xs text-red-900">${lista.map(c => `<li>• <strong>${escHtml(c.nome)}</strong> — ${fmtMoeda(c.total)} (desde${fmtD(c.maisAntiga)})</li>`).join('')}</ul>
-          <p class="text-[11px] mt-2 text-red-700">Lembre de cobrar quando passar no cliente.</p></details>`;
-        el.classList.remove('hidden');
-      } catch (err) {
-        console.error('Erro ao buscar notinhas em aberto:', err);
+      const nome = normNomeCliente(r.cliente_nome);
+      const chave = `${nome}|${d}`;
+      if (!dividasPorClienteData[chave]) {
+        dividasPorClienteData[chave] = { nome: r.cliente_nome, dia: d, totalVendido: 0, quitada: false };
       }
+      dividasPorClienteData[chave].totalVendido += valor;
+      if (String(r.status || '').toUpperCase() === 'PAGO') dividasPorClienteData[chave].quitada = true;
+    });
+
+    // 2. Soma todas as baixas registradas para cada cliente + data
+    const pagoPorChave = {};
+    (rb.data || []).forEach(b => {
+      const k = normNomeCliente(b.cliente_nome) + '|' + b.data_venda;
+      pagoPorChave[k] = (pagoPorChave[k] || 0) + Number(b.valor || 0);
+    });
+
+    // 3. Consolida o saldo devedor por cliente
+    const porCliente = {};
+    Object.keys(dividasPorClienteData).forEach(chave => {
+      const g = dividasPorClienteData[chave];
+      if (g.quitada) return;
+      const pago = pagoPorChave[chave] || 0;
+      const falta = g.totalVendido - pago;
+
+      if (falta >= 0.01) {
+        const c = porCliente[normNomeCliente(g.nome)] = porCliente[normNomeCliente(g.nome)] || {
+          nomeOriginal: g.nome,
+          total: 0,
+          detalhes: []
+        };
+        c.total += falta;
+        c.detalhes.push({ dia: g.dia, valorPendente: falta });
+      }
+    });
+
+    // 4. Atribui os débitos aos clientes da rota
+    const listaBanner = [];
+    let somaTotalGeral = 0;
+
+    bancoDadosRota.forEach(bloco => {
+      bloco.clientes.forEach(c => {
+        const d = porCliente[normNomeCliente(c.nome)];
+        if (d) {
+          c.devendo = d;
+          somaTotalGeral += d.total;
+          listaBanner.push({ id: c.id, nome: c.nome, ...d });
+        } else {
+          c.devendo = null;
+        }
+      });
+    });
+
+    // 5. Renderiza o Banner de Notinhas no topo da rota
+    const el = document.getElementById('banner-notinhas');
+    if (!el) return;
+    if (listaBanner.length === 0) {
+      el.classList.add('hidden');
+      return;
     }
+
+    el.classList.remove('hidden');
+    el.innerHTML = `
+      <details open>
+        <summary class="font-black text-red-800 text-sm cursor-pointer flex justify-between items-center">
+          <span>🔔 ${listaBanner.length} cliente(s) devendo notinha (Total: R$ ${somaTotalGeral.toFixed(2).replace('.', ',')})</span>
+          <span class="text-xs font-normal underline">ver detalhes</span>
+        </summary>
+        <div class="mt-2 space-y-1.5 pt-2 border-t border-red-200 text-xs">
+          ${listaBanner.map(item => `
+            <div class="flex justify-between items-center bg-white p-2 rounded border border-red-100 shadow-xs">
+              <div>
+                <strong class="text-slate-800">${item.nome}</strong>
+                <span class="block text-[10px] text-red-600 font-bold">Deve ${fmtMoeda(item.total)}</span>
+              </div>
+              <button onclick="receberNotinhaCliente('${item.nome.replace(/'/g, "\\'")}', ${item.total})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded text-xs transition shadow-xs">
+                💵 Receber
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    `;
+
+    atualizarResumoFechamento();
+  } catch (err) {
+    console.error("Erro ao carregar notinhas em aberto:", err);
+  }
+}
     function pedirSenha() {
       try {
         const selectV = document.getElementById('select-vendedor');
@@ -731,41 +822,48 @@
     }
 
     function atualizarResumoFechamento() {
-      let total = 0, din = 0, pix = 0, prazo = 0, nPrazo = 0, boleto = 0, nBoleto = 0;
-      (typeof bancoDadosRota !== 'undefined' ? bancoDadosRota : []).forEach(b => (b.clientes || []).forEach(c => {
-        if (c.status === 'vendido' && c.venda) {
-          const v = Number(c.venda.total || 0);
-          const f = String(c.venda.pagamento || '').toUpperCase();
-          total += v;
-          if (f.includes('DINHEIRO')) {
-            din += v;
-          } else if (f.includes('PIX')) {
-            pix += v;
-          } else if (f.includes('BOLETO')) {
-            boleto += v;
-            nBoleto++;
-          } else {
-            prazo += v;
-            nPrazo++;
-          }
-        }
-      }));
-      const d = lerDespesasDigitadas();
-      const set = (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; };
-      set('res-total', fmtMoeda(total)); 
-      set('res-dinheiro', fmtMoeda(din)); 
-      set('res-pix', fmtMoeda(pix));
-      set('res-prazo', fmtMoeda(prazo)); 
-      set('res-prazo-qtd', nPrazo > 0 ? `(${nPrazo})` : '');
-      set('res-boleto', fmtMoeda(boleto)); 
-      set('res-boleto-qtd', nBoleto > 0 ? `(${nBoleto})` : '');
-      set('res-despesas', '- ' + fmtMoeda(d.total)); 
-      set('res-liquido', fmtMoeda(din - d.total));
-      
-      const av = document.getElementById('res-aviso-despesas');
-      if (av) av.classList.toggle('hidden', !(d.total > 0 && d.assinatura !== despesasSalvasAssinatura));
-    }
+  let totalVendido = 0, din = 0, pix = 0, prazo = 0, nPrazo = 0, boleto = 0, nBoleto = 0;
 
+  // 1. Somatório das vendas feitas no dia
+  (typeof bancoDadosRota !== 'undefined' ? bancoDadosRota : []).forEach(b => (b.clientes || []).forEach(c => {
+    if (c.status === 'vendido' && c.venda) {
+      const v = Number(c.venda.total || 0);
+      const f = String(c.venda.pagamento || '').toUpperCase();
+      totalVendido += v;
+      if (f.includes('DINHEIRO')) din += v;
+      else if (f.includes('PIX')) pix += v;
+      else if (f.includes('BOLETO')) { boleto += v; nBoleto++; }
+      else { prazo += v; nPrazo++; }
+    }
+  }));
+
+  // 2. Somatório das Notinhas Recebidas HOJE (Entram direto no Acerto/Caixa)
+  let recDinheiro = 0, recPix = 0;
+  (recebimentosNotinhasDoDia || []).forEach(r => {
+    const val = Number(r.valor || 0);
+    const f = String(r.forma || '').toUpperCase();
+    if (f.includes('PIX')) recPix += val;
+    else recDinheiro += val;
+  });
+
+  const totalDinheiroComRecebimentos = din + recDinheiro;
+  const totalPixComRecebimentos = pix + recPix;
+  const d = lerDespesasDigitadas();
+
+  const set = (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; };
+
+  set('res-total', fmtMoeda(totalVendido)); 
+  set('res-dinheiro', `${fmtMoeda(totalDinheiroComRecebimentos)}${recDinheiro > 0 ? ` (inc. R$ ${recDinheiro.toFixed(2)} notinhas)` : ''}`); 
+  set('res-pix', `${fmtMoeda(totalPixComRecebimentos)}${recPix > 0 ? ` (inc. R$ ${recPix.toFixed(2)} notinhas)` : ''}`);
+  set('res-prazo', fmtMoeda(prazo)); 
+  set('res-prazo-qtd', nPrazo > 0 ? `(${nPrazo})` : '');
+  set('res-boleto', fmtMoeda(boleto)); 
+  set('res-boleto-qtd', nBoleto > 0 ? `(${nBoleto})` : '');
+  set('res-despesas', '- ' + fmtMoeda(d.total)); 
+  
+  // O líquido em mão considera Todo Dinheiro de Vendas + Notinhas Cobradas - Despesas do Dia
+  set('res-liquido', fmtMoeda(totalDinheiroComRecebimentos - d.total));
+}
     function renderizarCidades() {
       atualizarResumoFechamento();
       const container = document.getElementById('cidades-container');
@@ -905,13 +1003,21 @@
       }
 
       const tituloCliente = document.getElementById('modal-cliente-nome');
-      tituloCliente.innerText = clienteAtual.nome;
-      if (clienteAtual.devendo) {
-        const aviso = document.createElement('span');
-        aviso.className = 'block text-xs font-bold text-red-600 mt-1';
-        aviso.innerText = `⚠️ Este cliente deve ${fmtMoeda(clienteAtual.devendo.total)} em notinha a prazo. Lembre de cobrar!`;
-        tituloCliente.appendChild(aviso);
-      }
+tituloCliente.innerText = clienteAtual.nome;
+
+if (clienteAtual.devendo) {
+  const aviso = document.createElement('div');
+  aviso.className = 'mt-2 p-2 bg-red-50 border border-red-300 rounded-lg flex justify-between items-center';
+  aviso.innerHTML = `
+    <div>
+      <span class="block text-xs font-bold text-red-800">⚠️ Deve ${fmtMoeda(clienteAtual.devendo.total)} em notinha</span>
+    </div>
+    <button type="button" onclick="receberNotinhaCliente('${clienteAtual.nome.replace(/'/g, "\\'")}', ${clienteAtual.devendo.total})" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded text-xs shadow-xs">
+      💵 Receber Notinha
+    </button>
+  `;
+  tituloCliente.appendChild(aviso);
+}
 
       document.getElementById('modal-pagamento').value = 'Dinheiro';
       document.getElementById('modal-obs').value = '';
@@ -1452,6 +1558,276 @@
         }
       }
     }
+
+    // =========================================================================
+// SISTEMA DE CONFERÊNCIA FINAL E RETORNO COM PREÇO DINÂMICO
+// =========================================================================
+
+let dadosConferenciaEstoque = {};
+
+// Obtém o preço base do produto considerando o vendedor atual e tabela especial
+function getPrecoBaseProduto(prodId) {
+  const vendedorAtual = (document.getElementById('header-vendedor')?.innerText || '').toUpperCase();
+  let pPadrao = PRODUTOS_CATALOGO.find(p => p.id === prodId)?.precoPadrao || 0;
+  
+  for (let nomeVend in PRECOS_ESPECIAIS_VENDEDOR) {
+    if (vendedorAtual.includes(nomeVend) && PRECOS_ESPECIAIS_VENDEDOR[nomeVend][prodId] !== undefined) {
+      pPadrao = PRECOS_ESPECIAIS_VENDEDOR[nomeVend][prodId];
+    }
+  }
+  return pPadrao;
+}
+
+// Calcula o preço médio real praticado nas vendas do dia para aquele produto
+function calcularPrecoDinamicoDoDia(prodId) {
+  let totalFaturado = 0;
+  let totalQtdVendida = 0;
+
+  (typeof bancoDadosRota !== 'undefined' ? bancoDadosRota : []).forEach(bloco => {
+    (bloco.clientes || []).forEach(c => {
+      if (c.status === 'vendido' && c.venda && c.venda.itens) {
+        const item = c.venda.itens[prodId];
+        if (item && item.qtd > 0) {
+          const qtd = Number(item.qtd || 0);
+          const precoItem = Number(item.preco !== undefined ? item.preco : getPrecoBaseProduto(prodId));
+          totalQtdVendida += qtd;
+          totalFaturado += qtd * precoItem;
+        }
+      }
+    });
+  });
+
+  return totalQtdVendida > 0 ? (totalFaturado / totalQtdVendida) : getPrecoBaseProduto(prodId);
+}
+
+// Função acionada pelo botão "Concluir Fechamento do Dia"
+async function concluirEBloquearFechamento() {
+  const dg = lerDespesasDigitadas();
+  if (dg.total > 0 && dg.assinatura !== despesasSalvasAssinatura) {
+    alert('Você digitou despesas mas ainda não clicou em "Salvar Despesas". Salve antes de concluir o fechamento.');
+    document.getElementById('conteudo-despesas')?.classList.remove('hidden');
+    return;
+  }
+
+  await abrirModalConferenciaFinal();
+}
+
+// Abre a modal e calcula a carga, saídas e retorno esperado
+async function abrirModalConferenciaFinal() {
+  const vendedor = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+  // 1. Busca Carga Inicial gravada hoje no Supabase
+  const { data: estData } = await supabaseClient
+    .from('fechamentos')
+    .select('*')
+    .ilike('vendedor_nome', vendedor)
+    .eq('status', 'ESTOQUE')
+    .or(`data_fechamento.eq.${hoje},created_at.gte.${hoje}T00:00:00-03:00`)
+    .limit(1)
+    .maybeSingle();
+
+  const est = estData || {};
+
+  // Carga total (Carga Nova + Sobra de Ontem)
+  const cargaTotal = {
+    '330ML': Number(est.carga_330ml || 0) + Number(est.retorno_declarado_330ml || 0),
+    '900ML': Number(est.carga_900ml || 0) + Number(est.retorno_declarado_900ml || 0),
+    'UVA': Number(est.carga_uva || 0) + Number(est.retorno_declarado_uva || 0),
+    'FARDO_SG': Number(est.carga_agua || 0) + Number(est.retorno_declarado_agua || 0),
+    'FARDO_CG': Number(est.carga_agua_gas || 0) + Number(est.retorno_declarado_agua_gas || 0)
+  };
+
+  // 2. Calcula Saídas do Dia (Vendas + Trocas)
+  const saidasDia = { '330ML': 0, '900ML': 0, 'UVA': 0, 'FARDO_SG': 0, 'FARDO_CG': 0 };
+
+  (typeof bancoDadosRota !== 'undefined' ? bancoDadosRota : []).forEach(bloco => {
+    (bloco.clientes || []).forEach(c => {
+      if (c.status === 'vendido' && c.venda && c.venda.itens) {
+        const i = c.venda.itens;
+        saidasDia['330ML'] += Number(i['330ML']?.qtd || 0) + Number(i['330ML']?.troca || 0);
+        saidasDia['900ML'] += Number(i['900ML']?.qtd || 0) + Number(i['900ML']?.troca || 0);
+        saidasDia['UVA'] += Number(i['UVA']?.qtd || 0) + Number(i['UVA']?.troca || 0);
+        saidasDia['FARDO_SG'] += Number(i['FARDO_SG']?.qtd || 0);
+        saidasDia['FARDO_CG'] += Number(i['FARDO_CG']?.qtd || 0);
+      }
+    });
+  });
+
+  // 3. Monta estrutura com os preços dinâmicos das vendas do dia
+  dadosConferenciaEstoque = {
+    '330ML': { 
+      nome: 'Suco 330ml', 
+      preco: calcularPrecoDinamicoDoDia('330ML'), 
+      carga: cargaTotal['330ML'], 
+      saida: saidasDia['330ML'], 
+      esperado: Math.max(0, cargaTotal['330ML'] - saidasDia['330ML']), 
+      contado: Math.max(0, cargaTotal['330ML'] - saidasDia['330ML']) 
+    },
+    '900ML': { 
+      nome: 'Suco 900ml', 
+      preco: calcularPrecoDinamicoDoDia('900ML'), 
+      carga: cargaTotal['900ML'], 
+      saida: saidasDia['900ML'], 
+      esperado: Math.max(0, cargaTotal['900ML'] - saidasDia['900ML']), 
+      contado: Math.max(0, cargaTotal['900ML'] - saidasDia['900ML']) 
+    },
+    'UVA': { 
+      nome: 'Suco Uva', 
+      preco: calcularPrecoDinamicoDoDia('UVA'), 
+      carga: cargaTotal['UVA'], 
+      saida: saidasDia['UVA'], 
+      esperado: Math.max(0, cargaTotal['UVA'] - saidasDia['UVA']), 
+      contado: Math.max(0, cargaTotal['UVA'] - saidasDia['UVA']) 
+    },
+    'FARDO_SG': { 
+      nome: 'Água Sem Gás', 
+      preco: calcularPrecoDinamicoDoDia('FARDO_SG'), 
+      carga: cargaTotal['FARDO_SG'], 
+      saida: saidasDia['FARDO_SG'], 
+      esperado: Math.max(0, cargaTotal['FARDO_SG'] - saidasDia['FARDO_SG']), 
+      contado: Math.max(0, cargaTotal['FARDO_SG'] - saidasDia['FARDO_SG']) 
+    },
+    'FARDO_CG': { 
+      nome: 'Água Com Gás', 
+      preco: calcularPrecoDinamicoDoDia('FARDO_CG'), 
+      carga: cargaTotal['FARDO_CG'], 
+      saida: saidasDia['FARDO_CG'], 
+      esperado: Math.max(0, cargaTotal['FARDO_CG'] - saidasDia['FARDO_CG']), 
+      contado: Math.max(0, cargaTotal['FARDO_CG'] - saidasDia['FARDO_CG']) 
+    }
+  };
+
+  renderizarModalConferencia();
+  document.getElementById('modalConferenciaFinal')?.classList.remove('hidden');
+}
+
+// Renderiza a lista de produtos na modal e atualiza falta/sobra
+function renderizarModalConferencia() {
+  const container = document.getElementById('lista-conferencia-produtos');
+  if (!container) return;
+
+  container.innerHTML = '';
+  let somaDiferencaReais = 0;
+
+  Object.keys(dadosConferenciaEstoque).forEach(key => {
+    const p = dadosConferenciaEstoque[key];
+    const difUnidades = p.contado - p.esperado;
+    const difReais = difUnidades * p.preco;
+    somaDiferencaReais += difReais;
+
+    let badgeDiferenca = '<span class="text-slate-500 font-bold text-xs">Exato (0)</span>';
+    if (difUnidades < 0) {
+      badgeDiferenca = `<span class="text-red-600 font-bold text-xs">Falta ${Math.abs(difUnidades)} un (R$ ${Math.abs(difReais).toFixed(2)})</span>`;
+    } else if (difUnidades > 0) {
+      badgeDiferenca = `<span class="text-emerald-600 font-bold text-xs">Sobra +${difUnidades} un (R$ ${difReais.toFixed(2)})</span>`;
+    }
+
+    container.innerHTML += `
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-1">
+          <strong class="text-xs text-slate-800">${p.nome} <span class="text-[10px] text-slate-400 font-normal">(R$ ${p.preco.toFixed(2)}/un)</span></strong>
+          <div>${badgeDiferenca}</div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center text-center text-xs">
+          <div class="bg-white p-1.5 rounded border">
+            <span class="block text-[10px] text-slate-400 uppercase font-bold">Carga Total</span>
+            <strong class="text-slate-700">${p.carga}</strong>
+          </div>
+          <div class="bg-white p-1.5 rounded border">
+            <span class="block text-[10px] text-slate-400 uppercase font-bold">Esperado</span>
+            <strong class="text-blue-900">${p.esperado}</strong>
+          </div>
+          <div>
+            <span class="block text-[10px] text-slate-600 font-bold uppercase mb-0.5">Retorno Físico</span>
+            <input type="number" min="0" value="${p.contado}" oninput="atualizarContadoProduto('${key}', this.value)" class="w-full border-2 border-blue-600 rounded-lg p-1 text-center font-black text-sm bg-blue-50/50">
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Atualiza Card de Resultado
+  const cardResult = document.getElementById('card-resultado-estoque');
+  const lblStatus = document.getElementById('lbl-resultado-status');
+  const lblSub = document.getElementById('lbl-resultado-sub');
+
+  if (!cardResult || !lblStatus || !lblSub) return;
+
+  if (somaDiferencaReais === 0) {
+    cardResult.className = "p-3.5 rounded-xl border-2 text-center space-y-1 bg-emerald-50 border-emerald-300";
+    lblStatus.className = "text-lg font-black text-emerald-800";
+    lblStatus.innerText = "🟢 Estoque Exato (Sem faltas)";
+    lblSub.innerText = "A contagem física confere perfeitamente com as vendas e trocas.";
+  } else if (somaDiferencaReais < 0) {
+    cardResult.className = "p-3.5 rounded-xl border-2 text-center space-y-1 bg-red-50 border-red-300";
+    lblStatus.className = "text-lg font-black text-red-700";
+    lblStatus.innerText = `🔴 Falta Total: - R$ ${Math.abs(somaDiferencaReais).toFixed(2)}`;
+    lblSub.innerText = "Diferença negativa encontrada no retorno do caminhão.";
+  } else {
+    cardResult.className = "p-3.5 rounded-xl border-2 text-center space-y-1 bg-emerald-50 border-emerald-300";
+    lblStatus.className = "text-lg font-black text-emerald-700";
+    lblStatus.innerText = `🟢 Sobra Total: + R$ ${somaDiferencaReais.toFixed(2)}`;
+    lblSub.innerText = "Sobra de mercadoria encontrada no retorno físico.";
+  }
+}
+
+// Atualiza o valor digitado no campo de retorno físico
+function atualizarContadoProduto(key, val) {
+  if (dadosConferenciaEstoque[key]) {
+    dadosConferenciaEstoque[key].contado = Math.max(0, parseInt(val) || 0);
+    renderizarModalConferencia();
+  }
+}
+
+// Fecha a modal
+function fecharModalConferenciaFinal() {
+  document.getElementById('modalConferenciaFinal')?.classList.add('hidden');
+}
+
+// Grava o sinal de fechamento final no Supabase e reseta o app
+async function confirmarEGravarFechamentoFinal() {
+  const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+  let somaDiferencaReais = 0;
+  Object.keys(dadosConferenciaEstoque).forEach(k => {
+    const p = dadosConferenciaEstoque[k];
+    somaDiferencaReais += (p.contado - p.esperado) * p.preco;
+  });
+
+  try {
+    const { error } = await supabaseClient
+      .from('fechamentos')
+      .insert([{
+        vendedor_nome: vendedorNome,
+        data_fechamento: hoje,
+        data_atendimento: new Date().toISOString(),
+        status: 'FECHAMENTO_CONCLUIDO',
+        retorno_contado_330ml: dadosConferenciaEstoque['330ML']?.contado || 0,
+        retorno_contado_900ml: dadosConferenciaEstoque['900ML']?.contado || 0,
+        retorno_contado_uva: dadosConferenciaEstoque['UVA']?.contado || 0,
+        retorno_contado_agua_sg: dadosConferenciaEstoque['FARDO_SG']?.contado || 0,
+        retorno_contado_agua_cg: dadosConferenciaEstoque['FARDO_CG']?.contado || 0,
+        diferenca_estoque_reais: somaDiferencaReais
+      }]);
+
+    if (error) throw error;
+
+    fecharModalConferenciaFinal();
+    alert(`Fechamento concluído com sucesso!\nResultado do Estoque: ${somaDiferencaReais < 0 ? 'Falta de R$ ' + Math.abs(somaDiferencaReais).toFixed(2) : (somaDiferencaReais > 0 ? 'Sobra de R$ ' + somaDiferencaReais.toFixed(2) : 'Estoque Bateu Perfeitamente')}`);
+    
+    if (typeof baixarRelatorioFechamento === 'function') {
+      await baixarRelatorioFechamento({ vendedor: vendedorNome });
+    }
+    window.location.reload();
+  } catch (err) {
+    alert("Erro ao gravar fechamento final: " + err.message);
+  }
+}
+
+
+    
   </script>
 </body>
 </html>
