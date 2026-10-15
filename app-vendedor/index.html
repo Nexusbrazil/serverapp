@@ -327,6 +327,7 @@
           cliente_id: dadosCliente.clienteId,
           cliente_nome: dadosCliente.clienteNome,
           cidade: dadosCliente.cidade,
+          data_fechamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
           data_atendimento: clienteAtual.data_atendimento_banco,
           qtd_330ml: Number(dadosCliente.qtd_330ml || 0),
           qtd_900ml: Number(dadosCliente.qtd_900ml || 0),
