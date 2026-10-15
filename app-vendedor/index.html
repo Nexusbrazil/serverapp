@@ -294,21 +294,19 @@
         .limit(1000);
       
       document.getElementById('btn-iniciar-txt').innerText = "INICIAR ATENDIMENTOS →";
-      if (error) { console.error("Erro recuperando progresso", error); return []; }
+      if (error) { console.error("Erro recuperando progresso", error); return { concluido: false, registros: [] }; }
       
-      const registrosHoje = data.filter(r => {
+      const registrosHoje = (data || []).filter(r => {
         const dC = r.created_at ? new Date(r.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
         const dA = r.data_atendimento ? new Date(r.data_atendimento).toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }) : null;
         return dC === hojeLocal || dA === hojeLocal || r.data_fechamento === hojeLocal;
       });
 
       const jaConcluido = registrosHoje.some(r => r.status === 'FECHAMENTO_CONCLUIDO');
-      if (jaConcluido) {
-        return [];
-      }
-
-      return registrosHoje;
+      
+      return { concluido: jaConcluido, registros: registrosHoje };
     }
+
 
     async function salvarClienteAoVivo(dadosCliente) {
       try {
@@ -602,7 +600,15 @@
     document.getElementById('header-vendedor').innerText = vend;
     document.getElementById('header-rota').innerText = rotaSel.toUpperCase();
 
-    const progressoHoje = await carregarProgressoDoDia(vend);
+    const resProgresso = await carregarProgressoDoDia(vend);
+    
+    // Bloqueia a reabertura se a rota já foi encerrada hoje
+    if (resProgresso.concluido) {
+      alert("🔒 A rota de hoje para " + vend + " já foi CONCLUÍDA e encerrada.\nNão é possível reabrir atendimentos hoje pelo aplicativo.");
+      return;
+    }
+    
+    const progressoHoje = resProgresso.registros;
     let estoquePreenchido = progressoHoje.some(p => 
       p.status === 'ESTOQUE' || p.carga_330ml != null || p.carga_900ml != null
     );
@@ -1332,6 +1338,8 @@
         alert("⚠️ ERRO: A carga de 900ml (" + total900 + " unidades) excede o limite máximo.");
         return;
       }
+
+      const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
       
       const dadosEstoque = {
         vendedor_nome: vendedorAtual,
@@ -1351,9 +1359,10 @@
       };
 
       try {
+        // UPSERT: Atualiza o registro de estoque existente caso já tenha sido gravado hoje
         const { error } = await supabaseClient
           .from('fechamentos')
-          .insert([dadosEstoque]);
+          .upsert(dadosEstoque, { onConflict: 'vendedor_nome,data_fechamento,status' });
 
         if (error) throw error;
         
