@@ -696,14 +696,13 @@ async function carregarNotinhasEmAberto(vend) {
   }
 
   try {
-    // 1. Busca os clientes diretamente no Supabase (igual ao Painel do Escritório)
+    // Busca os clientes no Supabase ordenados por cidade e nome do cliente
     const { data: clientesSupabase, error } = await supabaseClient
       .from('clientes_rotas')
       .select('*')
       .ilike('vendedor_nome', vend)
       .ilike('dia_semana', rotaSel)
       .order('cidade', { ascending: true })
-      .order('ordem', { ascending: true })
       .order('nome_cliente', { ascending: true });
 
     if (error) throw error;
@@ -713,7 +712,7 @@ async function carregarNotinhasEmAberto(vend) {
       return;
     }
 
-    // 2. Agrupa os clientes por Cidade para o layout do aplicativo
+    // Agrupa os clientes por Cidade para a interface do aplicativo
     const mapaCidades = {};
     clientesSupabase.forEach(c => {
       const cidadeNome = (c.cidade || 'GERAL').trim().toUpperCase();
@@ -741,7 +740,7 @@ async function carregarNotinhasEmAberto(vend) {
 
     const resProgresso = await carregarProgressoDoDia(vend);
     
-    // Bloqueia a reabertura se a rota já foi encerrada hoje
+    // Bloqueia se a rota já tiver sido encerrada hoje
     if (resProgresso.concluido) {
       alert("🔒 A rota de hoje para " + vend + " já foi CONCLUÍDA e encerrada.\nNão é possível reabrir atendimentos hoje pelo aplicativo.");
       return;
