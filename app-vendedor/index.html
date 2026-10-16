@@ -430,30 +430,46 @@
     }
 
     async function carregarRotasDoVendedor(vendedor) {
-      const selectRota = document.getElementById('select-rota');
-      if (!vendedor) { selectRota.innerHTML = '<option value="">Selecione o Vendedor primeiro</option>'; return; }
-      selectRota.innerHTML = '<option value="">Carregando rotas/dias...</option>';
-      try {
-        const res = await fetch(`${URL_API}/vendedores-cidades?vendedor=${encodeURIComponent(vendedor)}`);
-        const rotas = await res.json();
-        
-        // Unifica os nomes removendo espaços extras e eliminando todas as duplicadas
-        const rotasUnicas = [...new Set(
-          rotas.map(r => String(r || '').trim().toLowerCase())
-        )].filter(Boolean);
+  const selectRota = document.getElementById('select-rota');
+  if (!vendedor) { 
+    selectRota.innerHTML = '<option value="">Selecione o Vendedor primeiro</option>'; 
+    return; 
+  }
+  
+  selectRota.innerHTML = '<option value="">Carregando rotas/dias...</option>';
+  
+  try {
+    // Busca os dias de rota cadastrados no Supabase para este vendedor
+    const { data, error } = await supabaseClient
+      .from('clientes_rotas')
+      .select('dia_semana')
+      .ilike('vendedor_nome', vendedor);
 
-        selectRota.innerHTML = '<option value="">-- Selecione a Rota / Dia --</option>';
-        rotasUnicas.forEach(r => {
-          const opt = document.createElement('option'); 
-          opt.value = r; // Envia em minúsculo para a API (ex: quinta-feira)
-          opt.textContent = r.toUpperCase(); // Mostra em maiúsculo na tela
-          selectRota.appendChild(opt);
-        });
-      } catch (e) {
-        selectRota.innerHTML = '<option value="">Erro ao carregar rotas</option>';
-      }
+    if (error) throw error;
+    
+    // Unifica as rotas removendo duplicadas e espaços em branco
+    const rotasUnicas = [...new Set(
+      (data || []).map(r => String(r.dia_semana || '').trim())
+    )].filter(Boolean);
+
+    if (rotasUnicas.length === 0) {
+      selectRota.innerHTML = '<option value="">Nenhuma rota cadastrada</option>';
+      return;
     }
 
+    selectRota.innerHTML = '<option value="">-- Selecione a Rota / Dia --</option>';
+    rotasUnicas.forEach(r => {
+      const opt = document.createElement('option'); 
+      opt.value = r;
+      opt.textContent = r.toUpperCase();
+      selectRota.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Erro ao carregar rotas do Supabase:", err);
+    selectRota.innerHTML = '<option value="">Erro ao carregar rotas</option>';
+  }
+}
     function normNomeCliente(t) { return String(t || '').replace(/\(AVULSO\)/i, '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
     function escHtml(t) { return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
@@ -672,7 +688,7 @@ async function carregarNotinhasEmAberto(vend) {
 
     async function iniciarRota() {
   const vend = document.getElementById('select-vendedor').value;
-  const rotaSel = (document.getElementById('select-rota').value || '').toLowerCase().trim();
+  const rotaSel = (document.getElementById('select-rota').value || '').trim();
 
   if (!vend || !rotaSel) { 
     alert('Selecione o vendedor e a rota/dia!'); 
@@ -680,14 +696,45 @@ async function carregarNotinhasEmAberto(vend) {
   }
 
   try {
-    // Garante dia_semana sempre em minúsculas
-    const res = await fetch(`${URL_API}/clientes?vendedor=${encodeURIComponent(vend)}&dia_semana=${encodeURIComponent(rotaSel)}`);
-    bancoDadosRota = await res.json();
+    // 1. Busca os clientes diretamente no Supabase (igual ao Painel do Escritório)
+    const { data: clientesSupabase, error } = await supabaseClient
+      .from('clientes_rotas')
+      .select('*')
+      .ilike('vendedor_nome', vend)
+      .ilike('dia_semana', rotaSel)
+      .order('cidade', { ascending: true })
+      .order('ordem', { ascending: true })
+      .order('nome_cliente', { ascending: true });
 
-    if (!bancoDadosRota || bancoDadosRota.length === 0) {
+    if (error) throw error;
+
+    if (!clientesSupabase || clientesSupabase.length === 0) {
       alert('Nenhum cliente encontrado para essa rota!');
       return;
     }
+
+    // 2. Agrupa os clientes por Cidade para o layout do aplicativo
+    const mapaCidades = {};
+    clientesSupabase.forEach(c => {
+      const cidadeNome = (c.cidade || 'GERAL').trim().toUpperCase();
+      if (!mapaCidades[cidadeNome]) {
+        mapaCidades[cidadeNome] = [];
+      }
+      mapaCidades[cidadeNome].push({
+        id: c.id,
+        nome: c.nome_cliente,
+        vendedor: c.vendedor_nome,
+        dia_semana: c.dia_semana,
+        cidade: c.cidade,
+        ordem: c.ordem || 1,
+        status: 'pendente'
+      });
+    });
+
+    bancoDadosRota = Object.keys(mapaCidades).map(cidade => ({
+      cidade: cidade,
+      clientes: mapaCidades[cidade]
+    }));
 
     document.getElementById('header-vendedor').innerText = vend;
     document.getElementById('header-rota').innerText = rotaSel.toUpperCase();
@@ -706,7 +753,6 @@ async function carregarNotinhasEmAberto(vend) {
     );
 
     progressoHoje.forEach(p => {
-      // Recupera despesas do dia se houver
       if (p.despesa_combustivel != null || p.despesa_almoco != null || p.despesa_outras_valor != null) {
         document.getElementById('despesa_combustivel').value = p.despesa_combustivel || '';
         document.getElementById('despesa_almoco').value = p.despesa_almoco || '';
@@ -716,89 +762,40 @@ async function carregarNotinhasEmAberto(vend) {
       }
 
       if (p.cliente_id && p.status !== 'ESTOQUE' && p.status !== 'DESPESAS') {
-        let clienteAchado = false;
         bancoDadosRota.forEach(bloco => {
           let cli = bloco.clientes.find(c => String(c.id) === String(p.cliente_id));
           if (cli) {
-            clienteAchado = true;
             cli.data_atendimento_banco = p.data_atendimento;
             if (p.status === 'CONCLUIDO') {
               cli.status = 'vendido';
               cli.venda = {
                 total: Number(p.valor_total || 0),
-                pagamento: p.forma_pagamento || 'Dinheiro',
-                obs: p.observacao || '',
-                precisaNota: String(p.solicitacao_documento || '').includes('NOTA'),
-                precisaBoleto: String(p.solicitacao_documento || '').includes('BOLETO'),
-                itens: {
-                  '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
-                  '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
-                  'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
-                  'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
-                  'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
-                  'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
-                  'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
-                  'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
-                }
+                pagamento: p.forma_pagamento || 'Dinheiro'
               };
-            } else if (p.status === 'NAO_COMPROU') {
-              cli.status = 'nao_comprou';
+            } else if (p.status === 'NAO_VENDIDO') {
+              cli.status = 'nao_vendido';
+              cli.motivoNaoVenda = p.observacao || 'Não informado';
             }
           }
         });
-
-        // Se for um cliente avulso que foi lançado hoje, ele entra na lista
-        if (!clienteAchado && p.cliente_nome) {
-          const nomeCidade = (p.cidade || 'AVULSOS').toUpperCase();
-          let blocoCidade = bancoDadosRota.find(b => b.cidade.toUpperCase() === nomeCidade);
-          
-          let newCli = {
-            id: p.cliente_id,
-            nome: p.cliente_nome,
-            data_atendimento_banco: p.data_atendimento,
-            status: p.status === 'CONCLUIDO' ? 'vendido' : (p.status === 'NAO_COMPROU' ? 'nao_comprou' : 'pendente')
-          };
-          if (p.status === 'CONCLUIDO') {
-            newCli.venda = {
-              total: Number(p.valor_total || 0),
-              pagamento: p.forma_pagamento || 'Dinheiro',
-              obs: p.observacao || '',
-              precisaNota: String(p.solicitacao_documento || '').includes('NOTA'),
-              precisaBoleto: String(p.solicitacao_documento || '').includes('BOLETO'),
-              itens: {
-                  '330ML': { qtd: p.qtd_330ml||0, troca: p.troca_330ml||0 },
-                  '900ML': { qtd: p.qtd_900ml||0, troca: p.troca_900ml||0 },
-                  'UVA': { qtd: p.qtd_uva||0, troca: p.troca_uva||0 },
-                  'FARDO_SG': { qtd: p.qtd_agua_sg||0, troca: 0 },
-                  'FARDO_CG': { qtd: p.qtd_agua_cg||0, troca: 0 },
-                  'CX_COPO': { qtd: p.qtd_copo||0, troca: 0 },
-                  'GELO_5KG': { qtd: p.qtd_gelo||0, troca: 0 },
-                  'VENDA_TROCA': { qtd: p.qtd_venda_troca||0, preco: p.qtd_venda_troca ? (p.valor_venda_troca / p.qtd_venda_troca) : 3, troca: 0 }
-              }
-            };
-          }
-          if (blocoCidade) {
-            blocoCidade.clientes.push(newCli);
-          } else {
-            bancoDadosRota.push({ cidade: nomeCidade, clientes: [newCli] });
-          }
-        }
       }
     });
+
     await carregarNotinhasEmAberto(vend);
 
     document.getElementById('step-config').classList.add('hidden');
-
-    if (estoquePreenchido) {
+    
+    if (!estoquePreenchido) {
+      document.getElementById('modalEstoqueInicial').classList.remove('hidden');
+    } else {
       document.getElementById('step-rota').classList.remove('hidden');
       document.getElementById('box-fechamento').classList.remove('hidden');
       renderizarCidades();
-    } else {
-      abrirModalEstoque();
     }
-    
-  } catch (e) {
-    alert("Erro ao buscar rota do servidor: " + e.message);
+
+  } catch (err) {
+    console.error("Erro ao iniciar rota:", err);
+    alert("Erro ao carregar clientes do banco de dados: " + (err.message || err));
   }
 }
 
