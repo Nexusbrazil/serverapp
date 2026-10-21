@@ -1324,33 +1324,36 @@ if (clienteAtual.devendo) {
     }
     
     async function concluirEBloquearFechamento() {
-      const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
-      
-      const dg = lerDespesasDigitadas();
-      if (dg.total > 0 && dg.assinatura !== despesasSalvasAssinatura) {
-        alert('Você digitou despesas mas ainda não clicou em "Salvar Despesas". Salve antes de concluir o fechamento.');
-        document.getElementById('conteudo-despesas').classList.remove('hidden');
-        document.getElementById('icone-despesa').innerText = '▲';
-        return;
-      }
+  const vendedorNome = document.getElementById('header-vendedor')?.innerText || 'Vendedor';
+  
+  const dg = lerDespesasDigitadas();
+  if (dg.total > 0 && dg.assinatura !== despesasSalvasAssinatura) {
+    alert('Você digitou despesas mas ainda não clicou em "Salvar Despesas". Salve antes de concluir o fechamento.');
+    document.getElementById('conteudo-despesas').classList.remove('hidden');
+    document.getElementById('icone-despesa').innerText = '▲';
+    return;
+  }
 
-      const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O comprovante será baixado e o aplicativo será resetado para amanhã.");
-      if (!confirmou) return;
+  const confirmou = confirm("Deseja realmente concluir o fechamento do dia? O comprovante será baixado e o aplicativo será resetado para amanhã.");
+  if (!confirmou) return;
 
-      const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-      try {
-        await supabaseClient
-          .from('fechamentos')
-          .insert([{
-            vendedor_nome: vendedorNome,
-            data_fechamento: hoje,
-            data_atendimento: new Date().toISOString(),
-            status: 'FECHAMENTO_CONCLUIDO'
-          }]);
-      } catch (err) {
-        console.error("Erro ao gravar sinal de fechamento concluído:", err);
-      }
+  const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  try {
+    const { error } = await supabaseClient
+      .from('fechamentos')
+      .upsert([{
+        vendedor_nome: vendedorNome,
+        data_fechamento: hoje,
+        data_atendimento: new Date().toISOString(),
+        status: 'FECHAMENTO_CONCLUIDO'
+      }], { onConflict: 'vendedor_nome, data_fechamento' });
 
+    if (error) throw error;
+  } catch (err) {
+    console.error("Erro ao gravar sinal de fechamento concluído:", err);
+    alert("Erro ao gravar fechamento no banco de dados.");
+  }
+}
       let clientesAtendidos = [];
       if (typeof bancoDadosRota !== 'undefined') {
         bancoDadosRota.forEach(bloco => {
