@@ -1323,52 +1323,6 @@ if (clienteAtual.devendo) {
       });
     }
     
-      let clientesAtendidos = [];
-      if (typeof bancoDadosRota !== 'undefined') {
-        bancoDadosRota.forEach(bloco => {
-          bloco.clientes.forEach(c => {
-            if (c.status === 'vendido' && c.venda) {
-              clientesAtendidos.push({
-                clienteNome: c.nome,
-                cidade: bloco.cidade,
-                formaPagamento: c.venda.pagamento,
-                valorTotal: c.venda.total,
-                observacao: c.venda.obs,
-                qtd_330ml: c.venda.itens ? (c.venda.itens['330ML']?.qtd || 0) : 0,
-                qtd_900ml: c.venda.itens ? (c.venda.itens['900ML']?.qtd || 0) : 0,
-                qtd_uva: c.venda.itens ? (c.venda.itens['UVA']?.qtd || 0) : 0,
-                qtd_agua_sg: c.venda.itens ? (c.venda.itens['FARDO_SG']?.qtd || 0) : 0,
-                qtd_agua_cg: c.venda.itens ? (c.venda.itens['FARDO_CG']?.qtd || 0) : 0,
-                qtd_copo: c.venda.itens ? (c.venda.itens['CX_COPO']?.qtd || 0) : 0,
-                qtd_gelo: c.venda.itens ? (c.venda.itens['GELO_5KG']?.qtd || 0) : 0,
-                qtd_venda_troca: c.venda.itens ? (c.venda.itens['VENDA_TROCA']?.qtd || 0) : 0,
-                troca_330ml: c.venda.itens ? (c.venda.itens['330ML']?.troca || 0) : 0,
-                troca_900ml: c.venda.itens ? (c.venda.itens['900ML']?.troca || 0) : 0,
-                troca_uva: c.venda.itens ? (c.venda.itens['UVA']?.troca || 0) : 0
-              });
-            }
-          });
-        });
-      }
-
-      const despesasFinal = montarDespesasDoDia();
-
-      try {
-        if (typeof baixarRelatorioFechamento === 'function') {
-          await baixarRelatorioFechamento({
-            vendedor: vendedorNome,
-            clientes: clientesAtendidos,
-            despesas: despesasFinal
-          });
-        }
-      } catch (errPdf) {
-        console.error("Erro ao gerar o relatório:", errPdf);
-      }
-
-      alert("Fechamento concluído e comprovante gerado com sucesso!");
-      location.reload();
-    }
-    
     function abrirModalEstoque() {
       document.getElementById('modalEstoqueInicial').classList.remove('hidden');
     }
