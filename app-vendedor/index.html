@@ -439,7 +439,6 @@
   selectRota.innerHTML = '<option value="">Carregando rotas/dias...</option>';
   
   try {
-    // Busca os dias de rota cadastrados no Supabase para este vendedor
     const { data, error } = await supabaseClient
       .from('clientes_rotas')
       .select('dia_semana')
@@ -447,10 +446,16 @@
 
     if (error) throw error;
     
-    // Unifica as rotas removendo duplicadas e espaços em branco
-    const rotasUnicas = [...new Set(
-      (data || []).map(r => String(r.dia_semana || '').trim())
-    )].filter(Boolean);
+    // 1. Normaliza: Converte para maiúsculas e padroniza os espaços ao redor das barras '/'
+    const rotasMapeadas = (data || []).map(r => {
+      let raw = String(r.dia_semana || '').trim();
+      if (!raw) return null;
+      // Exemplo: "sexta/terca" ou "Sexta / Terça" vira "SEXTA / TERÇA"
+      return raw.toUpperCase().replace(/\s*\/\s*/g, ' / ').replace(/\s+/g, ' ');
+    }).filter(Boolean);
+
+    // 2. Remove duplicados
+    const rotasUnicas = [...new Set(rotasMapeadas)];
 
     if (rotasUnicas.length === 0) {
       selectRota.innerHTML = '<option value="">Nenhuma rota cadastrada</option>';
@@ -461,7 +466,7 @@
     rotasUnicas.forEach(r => {
       const opt = document.createElement('option'); 
       opt.value = r;
-      opt.textContent = r.toUpperCase();
+      opt.textContent = r;
       selectRota.appendChild(opt);
     });
 
