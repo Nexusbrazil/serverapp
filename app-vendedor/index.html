@@ -306,7 +306,6 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvZG5pamxyb2ZraGNiYnFsaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNjI3NDEsImV4cCI6MjEwNDgzODc0MX0.ezeNX5Ik4XkswxnAwaCIp3hHZyNRjrSEUJICV0N2jtE";
 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const URL_API = "https://server-sux7.onrender.com/api";
 
     let bancoDadosRota = [];
     let clienteAtual = null;
@@ -415,20 +414,35 @@
     const fmtMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     async function carregarVendedoresAPI() {
-      const selectVend = document.getElementById('select-vendedor');
-      try {
-        const res = await fetch(`${URL_API}/vendedores-cidades`);
-        const vendedores = await res.json();
-        selectVend.innerHTML = '<option value="">-- Selecione o Vendedor --</option>';
-        vendedores.forEach(v => {
-          const opt = document.createElement('option'); opt.value = v; opt.textContent = v;
-          selectVend.appendChild(opt);
-        });
-      } catch (e) {
-        selectVend.innerHTML = '<option value="">Erro ao carregar vendedores</option>';
-      }
+  const selectVend = document.getElementById('select-vendedor');
+  try {
+    const { data, error } = await supabaseClient
+      .from('clientes_rotas')
+      .select('vendedor_nome');
+
+    if (error) throw error;
+
+    const vendedoresUnicos = [...new Set(
+      (data || []).map(v => String(v.vendedor_nome || '').trim().toUpperCase())
+    )].filter(Boolean).sort();
+
+    if (vendedoresUnicos.length === 0) {
+      selectVend.innerHTML = '<option value="">Nenhum vendedor encontrado</option>';
+      return;
     }
 
+    selectVend.innerHTML = '<option value="">-- Selecione o Vendedor --</option>';
+    vendedoresUnicos.forEach(v => {
+      const opt = document.createElement('option'); 
+      opt.value = v; 
+      opt.textContent = v;
+      selectVend.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("Erro ao carregar vendedores do Supabase:", e);
+    selectVend.innerHTML = '<option value="">Erro ao carregar vendedores</option>';
+  }
+}
     async function carregarRotasDoVendedor(vendedor) {
   const selectRota = document.getElementById('select-rota');
   if (!vendedor) { 
