@@ -632,39 +632,46 @@ async function carregarNotinhasEmAberto(vend) {
   }
 }
     function pedirSenha() {
-      try {
-        const selectV = document.getElementById('select-vendedor');
-        const selectR = document.getElementById('select-rota');
-        
-        const vend = selectV ? selectV.value : '';
-        const rotaSel = selectR ? selectR.value : '';
-        
-        if (!vend || !rotaSel) { 
-          alert('Por favor, selecione o Vendedor e a Rota/Dia antes de continuar!'); 
-          return; 
-        }
-        
-        const elNome = document.getElementById('senha-vendedor-nome');
-        if (elNome) elNome.innerText = vend;
-        
-        const inputSenha = document.getElementById('input-senha-vendedor');
-        if (inputSenha) inputSenha.value = '';
-        
-        const modal = document.getElementById('modal-senha');
-        if (modal) {
-          modal.classList.remove('hidden');
-          setTimeout(() => { if (inputSenha) inputSenha.focus(); }, 150);
-        } else {
-          alert('Erro interno: O modal de senha (id="modal-senha") não foi encontrado no HTML.');
-        }
-      } catch (e) {
-        alert('Erro ao abrir tela de senha: ' + e.message);
-      }
+  try {
+    const selectV = document.getElementById('select-vendedor');
+    const selectR = document.getElementById('select-rota');
+    
+    const vend = selectV ? selectV.value : '';
+    const rotaSel = selectR ? selectR.value : '';
+    
+    if (!vend || !rotaSel) { 
+      alert('Por favor, selecione o Vendedor e a Rota/Dia antes de continuar!'); 
+      return; 
     }
-    function fecharModalSenha() {
-      const modal = document.getElementById('modal-senha');
-      if (modal) modal.classList.add('hidden');
+    
+    const elNome = document.getElementById('senha-vendedor-nome');
+    if (elNome) elNome.innerText = vend;
+    
+    const inputSenha = document.getElementById('input-senha-vendedor');
+    if (inputSenha) inputSenha.value = '';
+    
+    const modal = document.getElementById('modal-senha');
+    if (modal) {
+      // Remove o hidden e força o modal a ficar visível
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+      
+      setTimeout(() => { if (inputSenha) inputSenha.focus(); }, 150);
+    } else {
+      alert('Erro interno: O modal de senha (id="modal-senha") não foi encontrado no HTML.');
     }
+  } catch (e) {
+    alert('Erro ao abrir tela de senha: ' + e.message);
+  }
+}
+
+function fecharModalSenha() {
+  const modal = document.getElementById('modal-senha');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
 
     async function verificarSenha() {
       const vend = document.getElementById('select-vendedor').value;
