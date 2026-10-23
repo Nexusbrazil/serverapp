@@ -121,7 +121,6 @@
           <div class="w-1/2">
             <div class="flex gap-1">
               <input type="number" id="carga_330ml_cx" placeholder="Caixas" max="30" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
-              <input type="number" id="carga_330ml_un" placeholder="Unid." max="2400" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
             </div>
             <p id="carga_330ml_total" class="text-[10px] text-slate-500 text-center mt-0.5 h-3"></p>
           </div>
@@ -132,7 +131,6 @@
           <div class="w-1/2">
             <div class="flex gap-1">
               <input type="number" id="carga_900ml_cx" placeholder="Caixas" max="40" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
-              <input type="number" id="carga_900ml_un" placeholder="Unid." max="1000" oninput="atualizarTotalCarga()" class="w-1/2 p-2 border rounded text-sm text-center" min="0">
             </div>
             <p id="carga_900ml_total" class="text-[10px] text-slate-500 text-center mt-0.5 h-3"></p>
           </div>
@@ -152,6 +150,15 @@
           <input type="number" id="retorno_agua_gas" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
           <input type="number" id="carga_agua_gas" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
         </div>
+        <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">Água 1,5L</span>
+          <input type="number" id="retorno_agua_15l" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_agua_15l" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+        </div>
+          <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded border border-slate-200">
+          <span class="font-bold text-sm w-1/3">Água 5L</span>
+          <input type="number" id="retorno_agua_5l" placeholder="No Carro" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
+          <input type="number" id="carga_agua_5l" placeholder="Nova Carga" class="w-1/3 p-2 border rounded text-sm text-center" min="0">
       </div>
       <button onclick="salvarEstoqueInicial()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded text-sm transition">
         Confirmar Estoque e Iniciar Rota
@@ -398,7 +405,7 @@
     }
 
     const PRODUTOS_CATALOGO = [
-      { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.50 },  
+      { id: '330ML', nome: 'Suco Laranja 330ml', precoPadrao: 5.30 },  
       { id: '900ML', nome: 'Suco Laranja 900ml', precoPadrao: 11.00 },            
       { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
       { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
@@ -1348,7 +1355,6 @@ if (clienteAtual.devendo) {
 
     function totalCargaUnidades(k) {
       const cx = Number(document.getElementById(`carga_${k}_cx`).value) || 0;
-      const un = Number(document.getElementById(`carga_${k}_un`).value) || 0;
       return cx * (CONVERSAO_CAIXAS[k.toUpperCase()] || 0) + un;
     }
 
@@ -1363,10 +1369,7 @@ if (clienteAtual.devendo) {
   const vendedorAtual = document.getElementById('header-vendedor').innerText;
 
   const cx330 = Number(document.getElementById('carga_330ml_cx').value) || 0;
-  const un330 = Number(document.getElementById('carga_330ml_un').value) || 0;
   const cx900 = Number(document.getElementById('carga_900ml_cx').value) || 0;
-  const un900 = Number(document.getElementById('carga_900ml_un').value) || 0;
-
   const total330 = totalCargaUnidades('330ml');
   const total900 = totalCargaUnidades('900ml');
 
