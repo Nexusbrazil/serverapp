@@ -257,19 +257,19 @@
   </div>
     
       <div id="modal-senha" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[999] p-4 hidden" style="display: none;">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 text-center">
-      <h2 class="text-xl font-bold text-slate-800 mb-1">🔐 Acesso Restrito</h2>
-      <p class="text-xs text-slate-500 mb-4">Insira a senha de <span id="senha-vendedor-nome" class="font-bold text-blue-700"></span> para continuar.</p>
-      
-      <input type="password" id="input-senha-vendedor" placeholder="••••" class="w-full p-4 border-2 border-gray-300 rounded-xl mb-4 text-center text-2xl tracking-[0.5em] font-bold text-slate-800 focus:outline-none focus:border-blue-500" inputmode="numeric">
-      
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="fecharModalSenha()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold p-3 rounded-xl text-sm transition">Cancelar</button>
-        <button onclick="verificarSenha()" id="btn-confirmar-senha" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl text-sm shadow-md transition">Confirmar</button>
-      </div>
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 text-center border border-slate-200">
+    <h2 class="text-xl font-bold text-slate-800 mb-1">🔐 Acesso Restrito</h2>
+    <p class="text-xs text-slate-500 mb-4">Insira a senha de <span id="senha-vendedor-nome" class="font-bold text-blue-700"></span> para continuar.</p>
+    
+    <input type="password" id="input-senha-vendedor" placeholder="••••" class="w-full p-4 border-2 border-gray-300 rounded-xl mb-4 text-center text-2xl tracking-[0.5em] font-bold text-slate-800 focus:outline-none focus:border-blue-500" inputmode="numeric">
+    
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="fecharModalSenha()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold p-3 rounded-xl text-sm transition">Cancelar</button>
+      <button onclick="verificarSenha()" id="btn-confirmar-senha" class="bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl text-sm shadow-md transition">Confirmar</button>
     </div>
   </div>
-
+</div>
+    
   <!-- MODAL DE CONFERÊNCIA E CONTAGEM FINAL DE ESTOQUE NO FECHAMENTO -->
 <div id="modalConferenciaFinal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center z-50 p-3">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-5 max-h-[92vh] overflow-y-auto border border-slate-200 space-y-4">
