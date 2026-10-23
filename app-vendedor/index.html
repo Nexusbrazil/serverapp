@@ -659,7 +659,6 @@ async function carregarNotinhasEmAberto(vend) {
         alert('Erro ao abrir tela de senha: ' + e.message);
       }
     }
-
     function fecharModalSenha() {
       const modal = document.getElementById('modal-senha');
       if (modal) modal.classList.add('hidden');
@@ -1355,7 +1354,7 @@ if (clienteAtual.devendo) {
 
     function totalCargaUnidades(k) {
       const cx = Number(document.getElementById(`carga_${k}_cx`).value) || 0;
-      return cx * (CONVERSAO_CAIXAS[k.toUpperCase()] || 0) + un;
+      return cx * (CONVERSAO_CAIXAS[k.toUpperCase()] || 0);
     }
 
     function atualizarTotalCarga() {
