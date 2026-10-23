@@ -652,8 +652,14 @@ async function carregarNotinhasEmAberto(vend) {
     
     const modal = document.getElementById('modal-senha');
     if (modal) {
+      // Tira o modal de dentro de qualquer div pai oculta e joga na raiz da página
+      if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+      }
       modal.classList.remove('hidden');
-      modal.style.display = 'flex'; // Força a exibição como FLEX na tela
+      modal.style.display = 'flex';
+      modal.style.zIndex = '99999';
+      
       setTimeout(() => { if (inputSenha) inputSenha.focus(); }, 150);
     } else {
       alert('Erro interno: O modal de senha (id="modal-senha") não foi encontrado no HTML.');
@@ -667,7 +673,7 @@ function fecharModalSenha() {
   const modal = document.getElementById('modal-senha');
   if (modal) {
     modal.classList.add('hidden');
-    modal.style.display = 'none'; // Esconde completamente ao cancelar ou confirmar
+    modal.style.display = 'none';
   }
 }
     async function verificarSenha() {
