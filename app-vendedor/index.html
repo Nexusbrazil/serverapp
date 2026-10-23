@@ -1357,107 +1357,107 @@ if (clienteAtual.devendo) {
     }
 
     function totalCargaUnidades(k) {
-      const cx = Number(document.getElementById(`carga_${k}_cx`).value) || 0;
+      const cx = Number(document.getElementById(`carga_${k}_cx`)?.value) || 0;
       return cx * (CONVERSAO_CAIXAS[k.toUpperCase()] || 0);
     }
 
     function atualizarTotalCarga() {
       ['330ml', '900ml'].forEach(k => {
         const t = totalCargaUnidades(k);
-        document.getElementById(`carga_${k}_total`).innerText = t > 0 ? `= ${t} unidades` : '';
+        const el = document.getElementById(`carga_${k}_total`);
+        if (el) el.innerText = t > 0 ? `= ${t} unidades` : '';
       });
     }
 
     async function salvarEstoqueInicial() {
-  const vendedorAtual = document.getElementById('header-vendedor').innerText;
+      const vendedorAtual = document.getElementById('header-vendedor')?.innerText || '';
 
-  const cx330 = Number(document.getElementById('carga_330ml_cx').value) || 0;
-  const cx900 = Number(document.getElementById('carga_900ml_cx').value) || 0;
-  const total330 = totalCargaUnidades('330ml');
-  const total900 = totalCargaUnidades('900ml');
+      const cx330 = Number(document.getElementById('carga_330ml_cx')?.value) || 0;
+      const cx900 = Number(document.getElementById('carga_900ml_cx')?.value) || 0;
 
-  if (cx330 > 30) {
-    alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 30 caixas para o suco de 330ml.");
-    return;
-  }
-  if (total330 > 2400) {
-    alert("⚠️ ERRO: A carga de 330ml (" + total330 + " unidades) excede o limite máximo.");
-    return;
-  }
-  if (cx900 > 40) {
-    alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 40 caixas para o suco de 900ml.");
-    return;
-  }
-  if (total900 > 1000) {
-    alert("⚠️ ERRO: A carga de 900ml (" + total900 + " unidades) excede o limite máximo.");
-    return;
-  }
+      const total330 = totalCargaUnidades('330ml');
+      const total900 = totalCargaUnidades('900ml');
 
-  const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-  
+      if (cx330 > 30) {
+        alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 30 caixas para o suco de 330ml.");
+        return;
+      }
+      if (total330 > 2400) {
+        alert("⚠️ ERRO: A carga de 330ml (" + total330 + " unidades) excede o limite máximo.");
+        return;
+      }
+      if (cx900 > 40) {
+        alert("⚠️ ERRO: Quantidade muito alta!\nO limite máximo é de 40 caixas para o suco de 900ml.");
+        return;
+      }
+      if (total900 > 1000) {
+        alert("⚠️ ERRO: A carga de 900ml (" + total900 + " unidades) excede o limite máximo.");
+        return;
+      }
+
+      const hojeLocal = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      
   const dadosEstoque = {
-    vendedor_nome: vendedorAtual,
-    data_fechamento: hojeLocal,
-    data_atendimento: new Date().toISOString(),
-    status: 'ESTOQUE',
-    retorno_declarado_330ml: Number(document.getElementById('retorno_330ml').value) || 0,
-    carga_330ml: total330,
-    retorno_declarado_900ml: Number(document.getElementById('retorno_900ml').value) || 0,
-    carga_900ml: total900,
-    retorno_declarado_uva: Number(document.getElementById('retorno_uva').value) || 0,
-    carga_uva: Number(document.getElementById('carga_uva').value) || 0,
-    retorno_declarado_agua: Number(document.getElementById('retorno_agua').value) || 0,
-    carga_agua: Number(document.getElementById('carga_agua').value) || 0,
-    retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas').value) || 0,
-    carga_agua_gas: Number(document.getElementById('carga_agua_gas').value) || 0,
-    retorno_declarado_agua_15l: Number(document.getElementById('retorno_agua_15l').value) || 0,
-    carga_agua_15l: Number(document.getElementById('carga_agua_15l').value) || 0,
-    retorno_declarado_agua_5l: Number(document.getElementById('retorno_agua_5l').value) || 0,
-    carga_agua_5l: Number(document.getElementById('carga_agua_5l').value) || 0,
-  };
+        vendedor_nome: vendedorAtual,
+        data_fechamento: hojeLocal,
+        data_atendimento: new Date().toISOString(),
+        status: 'ESTOQUE',
+        retorno_declarado_330ml: Number(document.getElementById('retorno_330ml')?.value) || 0,
+        carga_330ml: total330,
+        retorno_declarado_900ml: Number(document.getElementById('retorno_900ml')?.value) || 0,
+        carga_900ml: total900,
+        retorno_declarado_uva: Number(document.getElementById('retorno_uva')?.value) || 0,
+        carga_uva: Number(document.getElementById('carga_uva')?.value) || 0,
+        retorno_declarado_agua: Number(document.getElementById('retorno_agua')?.value) || 0,
+        carga_agua: Number(document.getElementById('carga_agua')?.value) || 0,
+        retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas')?.value) || 0,
+        carga_agua_gas: Number(document.getElementById('carga_agua_gas')?.value) || 0,
+        retorno_declarado_agua_15l: Number(document.getElementById('retorno_agua_15l')?.value) || 0,
+        carga_agua_15l: Number(document.getElementById('carga_agua_15l')?.value) || 0,
+        retorno_declarado_agua_5l: Number(document.getElementById('retorno_agua_5l')?.value) || 0,
+        carga_agua_5l: Number(document.getElementById('carga_agua_5l')?.value) || 0,
+      };
 
-  try {
-    // 1. Verifica se já existe um registo de estoque salvo hoje para este vendedor
-    const { data: existente } = await supabaseClient
-      .from('fechamentos')
-      .select('id')
-      .ilike('vendedor_nome', vendedorAtual)
-      .eq('data_fechamento', hojeLocal)
-      .eq('status', 'ESTOQUE')
-      .limit(1)
-      .maybeSingle();
+      try {
+        const { data: existente } = await supabaseClient
+          .from('fechamentos')
+          .select('id')
+          .ilike('vendedor_nome', vendedorAtual)
+          .eq('data_fechamento', hojeLocal)
+          .eq('status', 'ESTOQUE')
+          .limit(1)
+          .maybeSingle();
 
-    let error = null;
-    if (existente && existente.id) {
-      // Atualiza o registo se já existir
-      const res = await supabaseClient
-        .from('fechamentos')
-        .update(dadosEstoque)
-        .eq('id', existente.id);
-      error = res.error;
-    } else {
-      // Insere um novo registo se não existir
-      const res = await supabaseClient
-        .from('fechamentos')
-        .insert([dadosEstoque]);
-      error = res.error;
+        let error = null;
+        if (existente && existente.id) {
+          const res = await supabaseClient
+            .from('fechamentos')
+            .update(dadosEstoque)
+            .eq('id', existente.id);
+          error = res.error;
+        } else {
+          const res = await supabaseClient
+            .from('fechamentos')
+            .insert([dadosEstoque]);
+          error = res.error;
+        }
+
+        if (error) throw error;
+        
+        alert("Estoque inicial gravado com sucesso! Boa rota.");
+        document.getElementById('modalEstoqueInicial').classList.add('hidden');
+        
+        document.getElementById('step-rota').classList.remove('hidden');
+        document.getElementById('box-fechamento').classList.remove('hidden');
+        
+        renderizarCidades();
+        
+      } catch (err) {
+        console.error("Erro ao salvar estoque:", err);
+        alert("Erro ao gravar estoque: " + (err.message || err));
+      }
     }
-
-    if (error) throw error;
     
-    alert("Estoque inicial gravado com sucesso! Boa rota.");
-    document.getElementById('modalEstoqueInicial').classList.add('hidden');
-    
-    document.getElementById('step-rota').classList.remove('hidden');
-    document.getElementById('box-fechamento').classList.remove('hidden');
-    
-    renderizarCidades();
-    
-  } catch (err) {
-    console.error("Erro ao salvar estoque:", err);
-    alert("Erro ao gravar estoque. Tente novamente.");
-  }
-}
     function toggleDespesas() {
       const cont = document.getElementById('conteudo-despesas');
       const icone = document.getElementById('icone-despesa');
