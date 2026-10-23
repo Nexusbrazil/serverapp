@@ -410,9 +410,11 @@
       { id: 'UVA', nome: 'Suco Uva 330ml', precoPadrao: 5.50 },
       { id: 'FARDO_SG', nome: 'Fardo Água Sem Gás 500ml (c/ 12)', precoPadrao: 12.00 },
       { id: 'FARDO_CG', nome: 'Fardo Água Com Gás 500ml (c/ 12)', precoPadrao: 14.00 },
+      { id: 'AGUA_15L', nome: 'Água 1,5L', precoPadrao: 13.00, semTroca: true },
+      { id: 'AGUA_5L', nome: 'Água 5L', precoPadrao: 13.50, semTroca: true },
       { id: 'CX_COPO', nome: 'Caixa de Copo', precoPadrao: 32.00, semTroca: true },
       { id: 'GELO_5KG', nome: 'Gelo 5kg', precoPadrao: 11.00, semTroca: true },
-      { id: 'VENDA_TROCA', nome: '🔁 Venda de Trocas', precoPadrao: 3.00, semTroca: true, destaqueTroca: true },
+      { id: 'VENDA_TROCA', nome: '🔁 Venda de Trocas', precoPadrao: 0.00, semTroca: true, destaqueTroca: true },
     ];
     
     const PRECOS_ESPECIAIS_VENDEDOR = { "GUSTAVO": { "330ML": 5.30 } };
@@ -1177,6 +1179,8 @@ if (clienteAtual.devendo) {
         qtd_uva: teveVenda ? (itensVendaTemp['UVA']?.qtd || 0) : 0,
         qtd_agua_sg: teveVenda ? (itensVendaTemp['FARDO_SG']?.qtd || 0) : 0,
         qtd_agua_cg: teveVenda ? (itensVendaTemp['FARDO_CG']?.qtd || 0) : 0,
+        qtd_agua_15l: teveVenda ? (itensVendaTemp['AGUA_15L']?.qtd || 0) : 0,
+        qtd_agua_5l: teveVenda ? (itensVendaTemp['AGUA_5L']?.qtd || 0) : 0,
         qtd_copo: teveVenda ? (itensVendaTemp['CX_COPO']?.qtd || 0) : 0,
         qtd_gelo: teveVenda ? (itensVendaTemp['GELO_5KG']?.qtd || 0) : 0,
         qtd_venda_troca: teveVenda ? (itensVendaTemp['VENDA_TROCA']?.qtd || 0) : 0,
@@ -1406,6 +1410,10 @@ if (clienteAtual.devendo) {
     carga_agua: Number(document.getElementById('carga_agua').value) || 0,
     retorno_declarado_agua_gas: Number(document.getElementById('retorno_agua_gas').value) || 0,
     carga_agua_gas: Number(document.getElementById('carga_agua_gas').value) || 0,
+    retorno_declarado_agua_15l: Number(document.getElementById('retorno_agua_15l').value) || 0,
+    carga_agua_15l: Number(document.getElementById('carga_agua_15l').value) || 0,
+    retorno_declarado_agua_5l: Number(document.getElementById('retorno_agua_5l').value) || 0,
+    carga_agua_5l: Number(document.getElementById('carga_agua_5l').value) || 0,
   };
 
   try {
