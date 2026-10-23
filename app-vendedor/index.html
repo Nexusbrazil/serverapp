@@ -256,7 +256,7 @@
     </div>
   </div>
     
-      <div id="modal-senha" class="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center z-50 p-4 hidden">
+      <div id="modal-senha" class="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[999] p-4 hidden" style="display: none;">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 text-center">
       <h2 class="text-xl font-bold text-slate-800 mb-1">🔐 Acesso Restrito</h2>
       <p class="text-xs text-slate-500 mb-4">Insira a senha de <span id="senha-vendedor-nome" class="font-bold text-blue-700"></span> para continuar.</p>
@@ -652,10 +652,8 @@ async function carregarNotinhasEmAberto(vend) {
     
     const modal = document.getElementById('modal-senha');
     if (modal) {
-      // Remove o hidden e força o modal a ficar visível
       modal.classList.remove('hidden');
-      modal.style.display = 'flex';
-      
+      modal.style.display = 'flex'; // Força a exibição como FLEX na tela
       setTimeout(() => { if (inputSenha) inputSenha.focus(); }, 150);
     } else {
       alert('Erro interno: O modal de senha (id="modal-senha") não foi encontrado no HTML.');
@@ -669,10 +667,9 @@ function fecharModalSenha() {
   const modal = document.getElementById('modal-senha');
   if (modal) {
     modal.classList.add('hidden');
-    modal.style.display = 'none';
+    modal.style.display = 'none'; // Esconde completamente ao cancelar ou confirmar
   }
 }
-
     async function verificarSenha() {
       const vend = document.getElementById('select-vendedor').value;
       const input = document.getElementById('input-senha-vendedor');
